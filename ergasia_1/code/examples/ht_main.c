@@ -10,46 +10,46 @@
 #define FILE_NAME "data.db"
 
 const char* names[] = {
-  "Yannis",
-  "Christofos",
-  "Sofia",
-  "Marianna",
-  "Vagelis",
-  "Maria",
-  "Iosif",
-  "Dionisis",
-  "Konstantina",
-  "Theofilos",
-  "Giorgos",
-  "Dimitris"
+        "Yannis",
+        "Christofos",
+        "Sofia",
+        "Marianna",
+        "Vagelis",
+        "Maria",
+        "Iosif",
+        "Dionisis",
+        "Konstantina",
+        "Theofilos",
+        "Giorgos",
+        "Dimitris"
 };
 
 const char* surnames[] = {
-  "Ioannidis",
-  "Svingos",
-  "Karvounari",
-  "Rezkalla",
-  "Nikolopoulos",
-  "Berreta",
-  "Koronis",
-  "Gaitanis",
-  "Oikonomou",
-  "Mailis",
-  "Michas",
-  "Halatsis"
+        "Ioannidis",
+        "Svingos",
+        "Karvounari",
+        "Rezkalla",
+        "Nikolopoulos",
+        "Berreta",
+        "Koronis",
+        "Gaitanis",
+        "Oikonomou",
+        "Mailis",
+        "Michas",
+        "Halatsis"
 };
 
 const char* cities[] = {
-  "Athens",
-  "San Francisco",
-  "Los Angeles",
-  "Amsterdam",
-  "London",
-  "New York",
-  "Tokyo",
-  "Hong Kong",
-  "Munich",
-  "Miami"
+        "Athens",
+        "San Francisco",
+        "Los Angeles",
+        "Amsterdam",
+        "London",
+        "New York",
+        "Tokyo",
+        "Hong Kong",
+        "Munich",
+        "Miami"
 };
 
 #define CALL_OR_DIE(call)     \
@@ -62,37 +62,38 @@ const char* cities[] = {
   }
 
 int main() {
-  BF_Init(LRU);
-  
-  CALL_OR_DIE(HT_Init());
+    BF_Init(LRU);
 
-  int indexDesc;
-  CALL_OR_DIE(HT_CreateIndex(FILE_NAME, GLOBAL_DEPT));
-  CALL_OR_DIE(HT_OpenIndex(FILE_NAME, &indexDesc)); 
+    CALL_OR_DIE(HT_Init());
 
-  Record record;
-  srand(12569874);
-  int r;
-  printf("Insert Entries\n");
-  for (int id = 0; id < RECORDS_NUM; ++id) {
-    // create a record
-    record.id = id;
-    r = rand() % 12;
-    memcpy(record.name, names[r], strlen(names[r]) + 1);
-    r = rand() % 12;
-    memcpy(record.surname, surnames[r], strlen(surnames[r]) + 1);
-    r = rand() % 10;
-    memcpy(record.city, cities[r], strlen(cities[r]) + 1);
+    int indexDesc;
+    CALL_OR_DIE(HT_CreateIndex(FILE_NAME, GLOBAL_DEPT));// creates a HashFile:"data.db" and gives GlobalDept=2 for the hashmap
+    CALL_OR_DIE(HT_OpenIndex(FILE_NAME, &indexDesc)); //it opens "data.db" and it returns its index( lets say it is index 10 ) to the HashFiles Array[20]
 
-    CALL_OR_DIE(HT_InsertEntry(indexDesc, record));
-  }
+    Record record;
+    srand(12569874);
+    int r;
+    printf("Insert Entries\n");
+    // Insertion of 1000 entries!
+    for (int id = 0; id < RECORDS_NUM; ++id) {
+        // create a record
+        record.id = id;
+        r = rand() % 12;
+        memcpy(record.name, names[r], strlen(names[r]) + 1);
+        r = rand() % 12;
+        memcpy(record.surname, surnames[r], strlen(surnames[r]) + 1);
+        r = rand() % 10;
+        memcpy(record.city, cities[r], strlen(cities[r]) + 1);
 
-  printf("RUN PrintAllEntries\n");
-  int id = rand() % RECORDS_NUM;
-  CALL_OR_DIE(HT_PrintAllEntries(indexDesc, &id));
-  //CALL_OR_DIE(HT_PrintAllEntries(indexDesc, NULL));
+        CALL_OR_DIE(HT_InsertEntry(indexDesc, record));// Array[indexDesc=10].inserts(record)
+    }
+
+    printf("RUN PrintAllEntries\n");
+    int id = rand() % RECORDS_NUM;
+    CALL_OR_DIE(HT_PrintAllEntries(indexDesc, &id));
+    //CALL_OR_DIE(HT_PrintAllEntries(indexDesc, NULL));
 
 
-  CALL_OR_DIE(HT_CloseFile(indexDesc));
-  BF_Close();
+    CALL_OR_DIE(HT_CloseFile(indexDesc));
+    BF_Close();
 }
