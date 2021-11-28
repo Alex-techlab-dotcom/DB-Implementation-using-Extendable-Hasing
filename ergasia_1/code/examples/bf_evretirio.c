@@ -19,7 +19,7 @@ int main() {
     int fd1;
     int requestedBlock=1;
     char *dataOfSecondBlock;
-    char *retriveAddress = malloc(15 * sizeof(char));
+    char retriveAddress[20];
     char *data;
     BF_Block *block, *secondBlock, *blockPointer, *block3;
     BF_Block_Init(&block);// it allocates the suitable space in memory
@@ -38,7 +38,7 @@ int main() {
     printf("BLOCK1 CONTAINS %d\n", data[0]);
     printf("THE ADDRESS OF BLOCK ONE IS : %p\n", (void *) block);
     BF_Block_SetDirty(block);
-    // CALL_OR_DIE(BF_UnpinBlock(block));
+    //CALL_OR_DIE(BF_UnpinBlock(block));
 
     /* block3 */
     CALL_OR_DIE(BF_AllocateBlock(fd1, block3));
@@ -50,7 +50,7 @@ int main() {
 
     /* block2 evretirio */
     CALL_OR_DIE(BF_AllocateBlock(fd1, secondBlock));
-    char *blockAddressToString = malloc(15* sizeof(char));
+    char blockAddressToString[20];
     //WE COPY THE ADDRESS OF BLOCK1 TO A STRING
     sprintf(blockAddressToString, "%p", (void *) block);
 
@@ -72,7 +72,7 @@ int main() {
 
     /* we retrive the address of block1*/
     requestedBlock=1;
-    memmove(retriveAddress, dataOfSecondBlock+(requestedBlock-1)*15, 15);
+    memmove(retriveAddress, dataOfSecondBlock+(requestedBlock-1)* strlen(blockAddressToString), strlen(blockAddressToString));
     printf("ADDRESS IS %s\n", retriveAddress);
     long fromStringToHex = strtol(retriveAddress, NULL, 16);//we convert the string to hex number
     blockPointer = (BF_Block *) fromStringToHex;
@@ -83,7 +83,7 @@ int main() {
 
 
     requestedBlock=2;
-    memmove(retriveAddress, dataOfSecondBlock+(requestedBlock-1)*15, 15);
+    memmove(retriveAddress, dataOfSecondBlock+(requestedBlock-1)* strlen(retriveAddress), strlen(retriveAddress));
     printf("RETRIEVED ADDRESS OF BLOCK3 IS %s\n", retriveAddress);
     if ( strcmp(retriveAddress, blockAddressToString) == 0 )printf("BINGO\n");
 
