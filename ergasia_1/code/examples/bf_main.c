@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bf.h"
+#include "../include/bf.h"
 
 #define CALL_OR_DIE(call)     \
   {                           \
@@ -19,7 +19,7 @@ int main() {
     BF_Block_Init(&block);// it allocates the suitable space in memory
 
     CALL_OR_DIE(BF_Init(LRU));//it uses the LRU method to clear the unneeded blocks from the buffer
-    CALL_OR_DIE(BF_CreateFile("data1.db"))
+    //CALL_OR_DIE(BF_CreateFile("data1.db"))
     CALL_OR_DIE(BF_OpenFile("data1.db", &fd1));// it gives the data1.db file a specific ID(lets say ID=11)
 
 
@@ -28,7 +28,7 @@ int main() {
         //In data1.dp we allocate a new block at the end of the file
         CALL_OR_DIE(BF_AllocateBlock(fd1, block));
         data = BF_Block_GetData(block);// we take info from the block we just allocated to data1.db
-        memset(data, i % 127, BF_BUFFER_SIZE);// we change the data
+        memset(data, 'H', BF_BUFFER_SIZE);// we change the data
         BF_Block_SetDirty(block);
         CALL_OR_DIE(BF_UnpinBlock(block));
     }
