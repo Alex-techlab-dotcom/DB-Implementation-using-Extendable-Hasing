@@ -13,7 +13,7 @@
   BF_ErrorCode code = call; \
   if (code != BF_OK) {      \
     BF_PrintError(code);    \
-    return HP_ERROR;        \
+    return HT_ERROR;        \
   }                         \
 }
 
@@ -31,8 +31,8 @@ HT_ErrorCode HT_CreateIndex(const char *filename, int depth) {
 
     /* Block Initialization*/
     BF_Block *firstBlock, *secondBlock;
-    CALL_BF(BF_Block_Init(&firstBlock));// it allocates the suitable space in memory
-    CALL_BF(BF_Block_Init(&secondBlock));// it allocates the suitable space in memory
+    BF_Block_Init(&firstBlock);// it allocates the suitable space in memory
+    BF_Block_Init(&secondBlock);// it allocates the suitable space in memory
 
     /* we allocate the blocks at the end of the BF_Block file */
     CALL_BF(BF_AllocateBlock(blockFileID, firstBlock));
@@ -44,11 +44,11 @@ HT_ErrorCode HT_CreateIndex(const char *filename, int depth) {
     memset(firstBlockData + strlen("HF")*sizeof(char), depth, sizeof(int));
     BF_Block_SetDirty(firstBlock);
 
-    int sz=pow(2,depth);
+    int sz=(int)pow(2,depth);
     HashTable* hashTable = malloc(sizeof(struct HashTable));
     hashTable->h_array=malloc(sz*sizeof(struct HashIndex));
     for(int i=0; i<sz; i++){
-        CALL_BF(BF_Block_Init(&hashTable->h_array[i].blockPointer)); //initialize hash table blocks
+        BF_Block_Init(&hashTable->h_array[i].blockPointer); //initialize hash table blocks
     }
 
     char ht_addr[20];
