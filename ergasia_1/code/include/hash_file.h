@@ -13,6 +13,15 @@ typedef struct Record {
 	char city[20];
 } Record;
 
+#define MAX_OPEN_FILES 20
+
+typedef struct HFcell{
+    int BFid;
+    char* FileName;
+}HFcell;
+
+HFcell OpenHashFiles[MAX_OPEN_FILES];
+
 /*
  * Η συνάρτηση HT_Init χρησιμοποιείται για την αρχικοποίηση κάποιον δομών που μπορεί να χρειαστείτε. 
  * Σε περίπτωση που εκτελεστεί επιτυχώς, επιστρέφεται HT_OK, ενώ σε διαφορετική περίπτωση κωδικός λάθους.

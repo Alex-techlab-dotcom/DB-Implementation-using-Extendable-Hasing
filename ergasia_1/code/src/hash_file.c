@@ -6,7 +6,7 @@
 #include "../include/hash_file.h"
 #include "../examples/exhashtable.h"
 
-#define MAX_OPEN_FILES 20
+
 
 #define CALL_BF(call)       \
 {                           \
@@ -19,6 +19,9 @@
 
 HT_ErrorCode HT_Init() {
     //insert code here
+    for ( int i = 0; i < MAX_OPEN_FILES; ++i ) {
+        OpenHashFiles[i].FileName=NULL;
+    }
     return HT_OK;
 }
 
@@ -57,21 +60,46 @@ HT_ErrorCode HT_CreateIndex(const char *filename, int depth) {
     char * secondBlockData = BF_Block_GetData(secondBlock);
     memmove(secondBlockData,ht_addr,strlen(ht_addr));
     BF_Block_SetDirty(secondBlock);
+    CALL_BF(BF_CloseFile(blockFileID));
     return HT_OK;
 }
 
 HT_ErrorCode HT_OpenIndex(const char *fileName, int *indexDesc) {
     //insert code here
-    return HT_OK;
+    for ( int i = 0; i <MAX_OPEN_FILES ; ++i ) {
+        if(OpenHashFiles[i].FileName==NULL){
+            OpenHashFiles[i].FileName= malloc((strlen(fileName)+1)*sizeof(char));
+            strcpy(OpenHashFiles[i].FileName,fileName);
+            CALL_BF(BF_OpenFile(fileName,&OpenHashFiles[i].BFid));
+            *indexDesc=i;
+            return HT_OK;
+        }
+    }
+    printf("NO SPACE AVAILABLE FOR HASHFILE :%s\n",fileName);
+    return HT_ERROR;
 }
 
 HT_ErrorCode HT_CloseFile(int indexDesc) {
     //insert code here
+    if(indexDesc<0 || indexDesc>MAX_OPEN_FILES){
+        printf("INDEX OUT OF TABLE LENGTH\n");
+        return HT_ERROR;
+    }
+    if(OpenHashFiles[indexDesc].FileName==NULL)printf("THERE IS NO OPEN FILE AT THIS INDEX\n");
+    CALL_BF(BF_CloseFile(OpenHashFiles[indexDesc].BFid));
+    free(OpenHashFiles[indexDesc].FileName);
+    OpenHashFiles[indexDesc].FileName=NULL;
     return HT_OK;
 }
 
 HT_ErrorCode HT_InsertEntry(int indexDesc, Record record) {
     //insert code here
+    BF_Block *secondBlock;
+    char * secondBlockData;
+    char HtAdrress[20];
+    CALL_BF(BF_GetBlock(OpenHashFiles[indexDesc].BFid,2,secondBlock));
+    secondBlockData= BF_Block_GetData(secondBlock);
+   // memmove(HtAdrress,secondBlockData,)
     return HT_OK;
 }
 
