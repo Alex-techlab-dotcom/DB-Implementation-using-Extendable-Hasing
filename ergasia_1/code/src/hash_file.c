@@ -55,25 +55,16 @@ HT_ErrorCode HT_CreateIndex(const char *filename, int depth) {
         BF_Block *block;
         BF_Block_Init(&block);
         CALL_BF(BF_AllocateBlock(blockFileID, block));
+        char * b_data = BF_Block_GetData(block);
+        memset(b_data, depth, sizeof(int));
+        CALL_BF(BF_Block_SetDirty(block));
+
         memset(secondBlockData+(2*i)*sizeof(int) ,i, sizeof(int));
         memset(secondBlockData+(2*i)*sizeof(int)+sizeof(int) ,i+3, sizeof(int));
 
     }
 
-   /* int sz=(int)pow(2,depth);
-    HashTable* hashTable = malloc(sizeof(struct HashTable));
-    hashTable->h_array=malloc(sz*sizeof(struct HashIndex));
-    for(int i=0; i<sz; i++){
-        BF_Block_Init(&hashTable->h_array[i].blockPointer); //initialize hash table blocks
-    }
-
-    char ht_addr[20];
-    sprintf(ht_addr, "%p", (void *) hashTable);
-
-    char * secondBlockData = BF_Block_GetData(secondBlock);
-    memmove(secondBlockData,ht_addr,strlen(ht_addr));
-    BF_Block_SetDirty(secondBlock);
-    CALL_BF(BF_CloseFile(blockFileID));*/
+    CALL_BF(BF_Block_SetDirty(secondBlock));
     return HT_OK;
 }
 
@@ -107,19 +98,30 @@ HT_ErrorCode HT_CloseFile(int indexDesc) {
 
 HT_ErrorCode HT_InsertEntry(int indexDesc, Record record) {
     //insert code here
-    BF_Block *secondBlock;
-    char * secondBlockData;
+    BF_Block *firstBlock, *secondBlock;
+    char *firstBlockData, * secondBlockData;
     char HtAddress[20];
+
+    CALL_BF(BF_GetBlock(OpenHashFiles[indexDesc].BFid,1,firstBlock));
+    firstBlockData= BF_Block_GetData(secondBlock);
+
+    char gd[10];
+    memmove(gd, firstBlockData + strlen("HF"), sizeof(int));
+    int global_depth = atoi(gd);
 
     /* we retrieve the address of the hashtable from the second block*/
     CALL_BF(BF_GetBlock(OpenHashFiles[indexDesc].BFid,2,secondBlock));
     secondBlockData= BF_Block_GetData(secondBlock);
-    /*the secondBlockData contains only the address of the hashtable so we take its lenght*/
-    memmove(HtAddress,secondBlockData, strlen(secondBlockData));
-    HashTable * hashTablePtr;
-    sscanf(HtAddress,"%p",&hashTablePtr);
 
-    /*We take the first GLOBAL-DEPTH bits from record.id*/
+    //hash function
+    int rec_id=record.id, block_index=0;
+    for(int i=0; i<global_depth; i++) {
+        block_index += (rec_id%2)*(int)pow(2, depth-i-1);
+        rec_id/=2;
+    }
+
+    memset
+
 
     return HT_OK;
 }

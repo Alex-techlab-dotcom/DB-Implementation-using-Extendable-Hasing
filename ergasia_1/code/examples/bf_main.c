@@ -28,15 +28,17 @@ int main() {
         //In data1.dp we allocate a new block at the end of the file
         CALL_OR_DIE(BF_AllocateBlock(fd1, block));
         data = BF_Block_GetData(block);// we take info from the block we just allocated to data1.db
-        memset(data, 'H', BF_BUFFER_SIZE);// we change the data
+        memset(data, i, sizeof(int));// we change the data
         BF_Block_SetDirty(block);
         CALL_OR_DIE(BF_UnpinBlock(block));
     }
+    char str[10];
     for (int i = 0; i < 1000; ++i) {
         CALL_OR_DIE(BF_GetBlock(fd1, i, block));//it finds the block_file with ID=fd1(11)
         // and it search for block with block_num==i and returns this block to var "block"
         data = BF_Block_GetData(block); // we take the info from the block we just searched for!
-        printf("block = %d and data = %d\n", i, data[0]);
+        memmove(str,data,sizeof(int));
+        printf("block = %d and data = %d\n", i, atoi(str));
         CALL_OR_DIE(BF_UnpinBlock(block));// we dodnt need this block anymore so we unpinned it from the buffer
     }
 
@@ -48,12 +50,12 @@ int main() {
     int blocks_num;
     CALL_OR_DIE(BF_GetBlockCounter(fd1, &blocks_num));//
 
-    for (int i = 0; i < blocks_num; ++i) {
+    /*for (int i = 0; i < blocks_num; ++i) {
         CALL_OR_DIE(BF_GetBlock(fd1, i, block));
         data = BF_Block_GetData(block);
         printf("block = %d and data = %d\n", i, data[i % BF_BUFFER_SIZE]);
         CALL_OR_DIE(BF_UnpinBlock(block));
-    }
+    }*/
 
     BF_Block_Destroy(&block);
     CALL_OR_DIE(BF_CloseFile(fd1));
