@@ -47,7 +47,20 @@ HT_ErrorCode HT_CreateIndex(const char *filename, int depth) {
     memset(firstBlockData + strlen("HF")*sizeof(char), depth, sizeof(int));
     BF_Block_SetDirty(firstBlock);
 
+    //char* blockData;
+    char * secondBlockData = BF_Block_GetData(secondBlock);
     int sz=(int)pow(2,depth);
+
+    for ( int i = 0; i <sz ; ++i ) {
+        BF_Block *block;
+        BF_Block_Init(&block);
+        CALL_BF(BF_AllocateBlock(blockFileID, block));
+        memset(secondBlockData+(2*i)*sizeof(int) ,i, sizeof(int));
+        memset(secondBlockData+(2*i)*sizeof(int)+sizeof(int) ,i+3, sizeof(int));
+
+    }
+
+   /* int sz=(int)pow(2,depth);
     HashTable* hashTable = malloc(sizeof(struct HashTable));
     hashTable->h_array=malloc(sz*sizeof(struct HashIndex));
     for(int i=0; i<sz; i++){
@@ -60,7 +73,7 @@ HT_ErrorCode HT_CreateIndex(const char *filename, int depth) {
     char * secondBlockData = BF_Block_GetData(secondBlock);
     memmove(secondBlockData,ht_addr,strlen(ht_addr));
     BF_Block_SetDirty(secondBlock);
-    CALL_BF(BF_CloseFile(blockFileID));
+    CALL_BF(BF_CloseFile(blockFileID));*/
     return HT_OK;
 }
 
@@ -96,10 +109,18 @@ HT_ErrorCode HT_InsertEntry(int indexDesc, Record record) {
     //insert code here
     BF_Block *secondBlock;
     char * secondBlockData;
-    char HtAdrress[20];
+    char HtAddress[20];
+
+    /* we retrieve the address of the hashtable from the second block*/
     CALL_BF(BF_GetBlock(OpenHashFiles[indexDesc].BFid,2,secondBlock));
     secondBlockData= BF_Block_GetData(secondBlock);
-   // memmove(HtAdrress,secondBlockData,)
+    /*the secondBlockData contains only the address of the hashtable so we take its lenght*/
+    memmove(HtAddress,secondBlockData, strlen(secondBlockData));
+    HashTable * hashTablePtr;
+    sscanf(HtAddress,"%p",&hashTablePtr);
+
+    /*We take the first GLOBAL-DEPTH bits from record.id*/
+
     return HT_OK;
 }
 

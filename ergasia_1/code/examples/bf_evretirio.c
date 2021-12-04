@@ -38,7 +38,7 @@ int main() {
     printf("BLOCK1 CONTAINS %d\n", data[0]);
     printf("THE ADDRESS OF BLOCK ONE IS : %p\n", (void *) block);
     BF_Block_SetDirty(block);
-    //CALL_OR_DIE(BF_UnpinBlock(block));
+    CALL_OR_DIE(BF_UnpinBlock(block));
 
     /* block3 */
     CALL_OR_DIE(BF_AllocateBlock(fd1, block3));
