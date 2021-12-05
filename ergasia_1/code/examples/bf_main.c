@@ -13,7 +13,16 @@
     }                         \
   }
 
+typedef struct Record {
+    int id;
+    char name[15];
+    char surname[20];
+    char city[22];
+} Record;
 int main() {
+
+    printf("sizeof(record):%lu\n",sizeof(Record));
+
     int fd1;
     BF_Block *block;
     BF_Block_Init(&block);// it allocates the suitable space in memory

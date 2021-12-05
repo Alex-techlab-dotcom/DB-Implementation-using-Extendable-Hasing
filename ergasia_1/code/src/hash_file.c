@@ -49,22 +49,22 @@ HT_ErrorCode HT_CreateIndex(const char *filename, int depth) {
     //char* blockData;
     char *secondBlockData = BF_Block_GetData(secondBlock);
     int sz = (int) pow(2, depth);
-
+    int numOfEntries = 0;
     for ( int i = 0; i < sz; ++i ) {
         BF_Block *block;
         BF_Block_Init(&block);
         CALL_BF(BF_AllocateBlock(blockFileID, block));
         char *b_data = BF_Block_GetData(block);
         memcpy(b_data, &depth, sizeof(int));
-        //memcpy(b_data+ sizeof(int))
-        CALL_BF(BF_Block_SetDirty(block));
+        memcpy(b_data + sizeof(int), &numOfEntries, sizeof(int));
+        BF_Block_SetDirty(block);
         int b = i + 3;
         memcpy(secondBlockData + (2 * i) * sizeof(int), &i, sizeof(int));
         memcpy(secondBlockData + (2 * i) * sizeof(int) + sizeof(int), &b, sizeof(int));
 
     }
 
-    CALL_BF(BF_Block_SetDirty(secondBlock));
+    BF_Block_SetDirty(secondBlock);
     return HT_OK;
 }
 
@@ -102,29 +102,45 @@ HT_ErrorCode HT_InsertEntry(int indexDesc, Record record) {
     char *firstBlockData, *secondBlockData;
     char HtAddress[20];
     int fileDesc = OpenHashFiles[indexDesc].BFid;
+    int numOfEntries;
 
     CALL_BF(BF_GetBlock(fileDesc, 1, firstBlock));
     firstBlockData = BF_Block_GetData(secondBlock);
 
     char gd[10];
-    memmove(gd, firstBlockData + strlen("HF"), sizeof(int));
-    int global_depth = atoi(gd);
+    int global_depth;
+    memcpy(&global_depth, firstBlockData + strlen("HF"), sizeof(int));
+
 
     /* we retrieve the address of the hashtable from the second block*/
     CALL_BF(BF_GetBlock(fileDesc, 2, secondBlock));
     secondBlockData = BF_Block_GetData(secondBlock);
 
     //hash function
-    int rec_id = record.id, block_index = 0;
+    int rec_id = record.id;
+    int block_index = 0;
     for ( int i = 0; i < global_depth; i++ ) {
-        block_index += (rec_id % 2) * (int) pow(2, depth - i - 1);
+        block_index += (rec_id % 2) * (int) pow(2, global_depth - i - 1);
         rec_id /= 2;
     }
     int destinationBlock;
+    char *blockToWritePointer;
     memcpy(secondBlockData + (2 * block_index + 1) * sizeof(int), &destinationBlock, sizeof(int));
     BF_Block *blockToWrite;
     CALL_BF(BF_GetBlock(fileDesc, destinationBlock, blockToWrite));
     /*insertion of data*/
+    blockToWritePointer = BF_Block_GetData(blockToWrite);
+    memcpy(&numOfEntries, blockToWritePointer + sizeof(int), sizeof(int));
+    if ( numOfEntries < (BF_BLOCK_SIZE-2*sizeof(int)/ sizeof(Record)) ) {
+        numOfEntries++;
+        memcpy(blockToWritePointer + sizeof(int), &numOfEntries, sizeof(int));
+
+        //writing record to block
+        memcpy(blockToWritePointer + 2 * sizeof(int) + (numOfEntries - 1) * sizeof(Record), &record, sizeof(Record));
+
+
+    }
+
 
     return HT_OK;
 }

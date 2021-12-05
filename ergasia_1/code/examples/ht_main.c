@@ -64,8 +64,8 @@ const char* cities[] = {
 int main() {
     BF_Init(LRU);
 
+    printf("sizeof(record):%lu\n",sizeof(Record));
     CALL_OR_DIE(HT_Init());
-
     int indexDesc;
     CALL_OR_DIE(HT_CreateIndex(FILE_NAME, GLOBAL_DEPT));// creates a HashFile:"data.db" and gives GlobalDept=2 for the hashmap
     CALL_OR_DIE(HT_OpenIndex(FILE_NAME, &indexDesc)); //it opens "data.db" and it returns its index( lets say it is index 10 ) to the HashFiles Array[20]
@@ -92,7 +92,6 @@ int main() {
     int id = rand() % RECORDS_NUM;
     CALL_OR_DIE(HT_PrintAllEntries(indexDesc, &id));
     //CALL_OR_DIE(HT_PrintAllEntries(indexDesc, NULL));
-
 
     CALL_OR_DIE(HT_CloseFile(indexDesc));
     BF_Close();
