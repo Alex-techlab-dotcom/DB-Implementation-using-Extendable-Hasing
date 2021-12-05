@@ -105,7 +105,7 @@ HT_ErrorCode HT_InsertEntry(int indexDesc, Record record) {
     int numOfEntries;
 
     CALL_BF(BF_GetBlock(fileDesc, 1, firstBlock));
-    firstBlockData = BF_Block_GetData(secondBlock);
+    firstBlockData = BF_Block_GetData(firstBlock);
 
     char gd[10];
     int global_depth;
@@ -138,6 +138,21 @@ HT_ErrorCode HT_InsertEntry(int indexDesc, Record record) {
         //writing record to block
         memcpy(blockToWritePointer + 2 * sizeof(int) + (numOfEntries - 1) * sizeof(Record), &record, sizeof(Record));
 
+
+    }
+    else{
+        //increase depth
+        global_depth++;
+        memcpy(&global_depth, firstBlockData + strlen("HF"), sizeof(int));
+
+        for(i=(int)pow(2, global_depth-1); i<(int)pow(2,global_depth); i++){
+            memcpy(secondBlockData + (2 * i) * sizeof(int), &i, sizeof(int));//indexing
+            //memcpy(secondBlockData + (2 * i) * sizeof(int) + sizeof(int), &b, sizeof(int));
+        }
+        
+        for(i=(int)pow(2, global_depth)-1; i>=0; i--){
+            memcpy(secondBlockData + (2*i)*sizeof(int) + sizeof(int), secondBlockData + (2*(i/2))*sizeof(int)+sizeof(int), sizeof(int));
+        }
 
     }
 
