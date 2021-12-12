@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "bf.h"
-#include "hash_file.h"
+#include "../include/bf.h"
+#include "../include/hash_file.h"
 
 #define RECORDS_NUM 1000 // you can change it if you want
 #define GLOBAL_DEPT 2 // you can change it if you want
@@ -62,8 +62,8 @@ const char* cities[] = {
   }
 
 int main() {
-    BF_Init(LRU);
 
+    //int array[]={26,14,16,12,10,21,17};
 
     CALL_OR_DIE(HT_Init());
     int indexDesc;
@@ -75,9 +75,11 @@ int main() {
     int r;
     printf("Insert Entries\n");
     // Insertion of 1000 entries!
-    for (int id = 0; id < 1; ++id) {
+    int numOfEntries=50;
+    for (int id = 0; id < numOfEntries; ++id) {
         // create a record
         record.id = id;
+       // printf("record.id=%d\n",record.id);
         r = rand() % 12;
         memcpy(record.name, names[r], strlen(names[r]) + 1);
         r = rand() % 12;
@@ -86,11 +88,18 @@ int main() {
         memcpy(record.city, cities[r], strlen(cities[r]) + 1);
 
         CALL_OR_DIE(HT_InsertEntry(indexDesc, record));// Array[indexDesc=10].inserts(record)
+       // CALL_OR_DIE(HT_PrintAllEntries(indexDesc, &id));
+
+
     }
 
     printf("RUN PrintAllEntries\n");
-    int id = rand() % RECORDS_NUM;
-    //
+    CALL_OR_DIE(printEverything(indexDesc));
+    printf("\n\n\n\n");
+
+    for ( int i = 0; i < numOfEntries; ++i ) {
+        CALL_OR_DIE(HT_PrintAllEntries(indexDesc, &i));
+    }
     //CALL_OR_DIE(HT_PrintAllEntries(indexDesc, &id));
     //CALL_OR_DIE(HT_PrintAllEntries(indexDesc, NULL));
 

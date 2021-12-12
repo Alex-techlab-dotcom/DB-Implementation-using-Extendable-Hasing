@@ -21,9 +21,7 @@ typedef struct HFcell{
 }HFcell;
 
 HFcell OpenHashFiles[MAX_OPEN_FILES];
-
-
-HT_ErrorCode Resize(int indexDesc);
+HT_ErrorCode printEverything(int indexDesc);
 
 /*
  * Η συνάρτηση HT_Init χρησιμοποιείται για την αρχικοποίηση κάποιον δομών που μπορεί να χρειαστείτε. 
