@@ -75,7 +75,7 @@ int main() {
     int r;
     printf("Insert Entries\n");
     // Insertion of 1000 entries!
-    int numOfEntries=50;
+    int numOfEntries=1000;
     for (int id = 0; id < numOfEntries; ++id) {
         // create a record
         record.id = id;
@@ -88,13 +88,13 @@ int main() {
         memcpy(record.city, cities[r], strlen(cities[r]) + 1);
 
         CALL_OR_DIE(HT_InsertEntry(indexDesc, record));// Array[indexDesc=10].inserts(record)
-       // CALL_OR_DIE(HT_PrintAllEntries(indexDesc, &id));
+      //  CALL_OR_DIE(HT_PrintAllEntries(indexDesc, &id));
 
 
     }
 
     printf("RUN PrintAllEntries\n");
-    CALL_OR_DIE(printEverything(indexDesc));
+    //CALL_OR_DIE(printEverything(indexDesc));
     printf("\n\n\n\n");
 
     for ( int i = 0; i < numOfEntries; ++i ) {

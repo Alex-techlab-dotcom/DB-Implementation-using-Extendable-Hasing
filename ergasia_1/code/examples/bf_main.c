@@ -53,6 +53,8 @@ int main() {
         memcpy(data, &v, sizeof(int));// we change the data
         BF_Block_SetDirty(block);
         CALL_OR_DIE(BF_UnpinBlock(block));
+        CALL_OR_DIE(BF_UnpinBlock(block));
+        CALL_OR_DIE(BF_UnpinBlock(block));
     }
 
      CALL_OR_DIE(BF_GetBlockCounter(fd1, &blocks_num));

@@ -19,6 +19,10 @@
 HT_ErrorCode
 SplitThePointers(int *pointersArray, int destinationBlock, int global_depth, int fileDesc, BF_Block *blockToWrite);
 
+HT_ErrorCode CopyBlocksToArray(int *arrayOfPointers, int fileDesc, int global_depth);
+
+HT_ErrorCode CopyArrayToBlocks(int *arrayOfPointers, int global_depth, int fileDesc);
+
 HT_ErrorCode Resize(int indexDesc, int destinationBlock, BF_Block *blockToWrite);
 
 HT_ErrorCode HT_Init() {
@@ -26,7 +30,7 @@ HT_ErrorCode HT_Init() {
     for ( int i = 0; i < MAX_OPEN_FILES; ++i ) {
         OpenHashFiles[i].FileName = NULL;
     }
-    BF_Init(MRU);
+    BF_Init(LRU);
     return HT_OK;
 }
 
@@ -48,24 +52,25 @@ HT_ErrorCode HT_CreateIndex(const char *filename, int depth) {
 
     char *firstBlockData = BF_Block_GetData(firstBlock);
     int two = 1;
-    char* str="HF";
+    char *str = "HF";
     strcpy(firstBlockData, str);
 
-    char* hf= malloc(strlen("HF")+1);
-    memcpy(hf,firstBlockData,strlen("HF")+1);
-    printf("sos: %s\n",hf);
+    char *hf = malloc(strlen("HF") + 1);
+    memcpy(hf, firstBlockData, strlen("HF") + 1);
+    printf("sos: %s\n", hf);
 
     int debug;
-    memcpy(firstBlockData + strlen("HF")+1, &depth, sizeof(int));
-   // memcpy(&debug,firstBlockData + strlen("HF")+1,sizeof(int ));
-   // printf("debug is %d\n",debug);
-    memcpy(firstBlockData + strlen("HF")+1 + sizeof(int), &two, sizeof(int));
+    memcpy(firstBlockData + strlen("HF") + 1, &depth, sizeof(int));
+    // memcpy(&debug,firstBlockData + strlen("HF")+1,sizeof(int ));
+    // printf("debug is %d\n",debug);
+    memcpy(firstBlockData + strlen("HF") + 1 + sizeof(int), &two, sizeof(int));
 
 
     //char* blockData;
     char *secondBlockData = BF_Block_GetData(secondBlock);
     int sz = (int) pow(2, depth);
     int numOfEntries = 0;
+    /*stin arxi se ka8e mplok deixnei enas deiktis (1 = 2^0) opote to ka8e mplok exei local_d=global_d-0 => local_d=global_d*/
     for ( int offset = 0; offset < sz; ++offset ) {
         BF_Block *block;
         BF_Block_Init(&block);
@@ -123,7 +128,7 @@ HT_ErrorCode HT_InsertEntry(int indexDesc, Record record) {
     char *firstBlockData, *secondBlockData;
     char HtAddress[20];
     int fileDesc = OpenHashFiles[indexDesc].BFid;
-   // printf("Bfid:%d\n",fileDesc);
+    // printf("Bfid:%d\n",fileDesc);
     int numOfEntries;
 
     BF_Block_Init(&firstBlock);// it allocates the suitable space in memory
@@ -134,7 +139,7 @@ HT_ErrorCode HT_InsertEntry(int indexDesc, Record record) {
 
 
     int global_depth;
-    memcpy(&global_depth, firstBlockData + strlen("HF")+1, sizeof(int));
+    memcpy(&global_depth, firstBlockData + strlen("HF") + 1, sizeof(int));
 
 
     /* we retrieve the address of the hashtable from the second block*/
@@ -153,7 +158,8 @@ HT_ErrorCode HT_InsertEntry(int indexDesc, Record record) {
      * lets assume that ID=7(111) and global_depth=2 so block_index=3(11)
      */
     int hashBlockIndex;
-    memcpy(&hashBlockIndex, firstBlockData + strlen("HF")+1 + sizeof(int) + (block_index / 128) * sizeof(int), sizeof(int));
+    memcpy(&hashBlockIndex, firstBlockData + strlen("HF") + 1 + sizeof(int) + (block_index / 128) * sizeof(int),
+           sizeof(int));
     //printf("hashblockIndex inside insert is %d\n",hashBlockIndex);
     //we find the corresponding hashblock
     BF_Block *hashBlock;
@@ -178,7 +184,8 @@ HT_ErrorCode HT_InsertEntry(int indexDesc, Record record) {
     blockToWritePointer = BF_Block_GetData(blockToWrite);
     /* first we check how many entries have already took place */
     memcpy(&numOfEntries, blockToWritePointer + sizeof(int), sizeof(int));
-    if ( numOfEntries < (BF_BLOCK_SIZE - 2 * sizeof(int) )/ sizeof(Record)) {
+    BF_UnpinBlock(hashBlock);
+    if ( numOfEntries < (BF_BLOCK_SIZE - 2 * sizeof(int)) / sizeof(Record)) {
 
         /* There is enough space so we make one more insertion*/
         numOfEntries++;
@@ -194,64 +201,96 @@ HT_ErrorCode HT_InsertEntry(int indexDesc, Record record) {
 
     } else {
 
-        printf("destination block %d that has more than 8 entries\n",destinationBlock);
-        printf("global depth before resize:%d\n",global_depth);
-        Resize(indexDesc, destinationBlock, blockToWrite);
+        //MORE THAN 8 ENTRIES INSIDE THE BLOCK
+        //blockToWrite is the block that has already 8 entries
+        int local_depth;
+        memcpy(&local_depth, blockToWritePointer, sizeof(int));
+
+        if ( local_depth == global_depth ) {
+            //resize and split
+            printf("destination block %d that has more than 8 entries\n", destinationBlock);
+            printf("global depth before resize:%d\n", global_depth);
+            Resize(indexDesc, destinationBlock, blockToWrite);
+        } else if ( local_depth < global_depth ) {
+            //split
+            printf("destination block %d that has more than 8 entries\n", destinationBlock);
+            int *array = malloc(((int) pow(2, global_depth)) * sizeof(int));
+            CopyBlocksToArray(array, fileDesc, global_depth);
+            printf("before split\n");
+          /*  for ( int i = 0; i < (int) pow(2, global_depth); ++i ) {
+                printf("index %d = %d\n", i, array[i]);
+            }*/
+            SplitThePointers(array, destinationBlock, global_depth, fileDesc, blockToWrite);
+            printf("after split\n");
+            /*for ( int i = 0; i < (int) pow(2, global_depth); ++i ) {
+                printf("index %d = %d\n", i, array[i]);
+            }*/
+            CopyArrayToBlocks(array, global_depth, fileDesc);
+        }
+
+
+
+
+
         firstBlockData = BF_Block_GetData(firstBlock);
-        memcpy(&global_depth,firstBlockData+ strlen("HF")+1, sizeof(int));
-        printf("new global depth after resize:%d\n",global_depth);
+        memcpy(&global_depth, firstBlockData + strlen("HF") + 1, sizeof(int));
+        //printf("new global depth after resize:%d\n", global_depth);
 
 
         printf("BEFORE REINSERTION\n");
-       // printEverything(fileDesc);
+        // printEverything(fileDesc);
         printf("\n\n\n\n");
 
         /*we reinsert the records of the overflow-block*/
         printf("we reinsert the records of the overflow-block\n");
+
         Record *recordArray[9];
         for ( int i = 0; i < 8; ++i ) {
             recordArray[i] = malloc(sizeof(Record));
-            memcpy(recordArray[i],blockToWritePointer + 2 * sizeof(int) + i * sizeof(Record), sizeof(Record));
+            memcpy(recordArray[i], blockToWritePointer + 2 * sizeof(int) + i * sizeof(Record), sizeof(Record));
         }
         recordArray[8] = malloc(sizeof(Record));
         recordArray[8] = &record;
         //we keep only the local depth and we eraze everything else from the overflow block
         memset(blockToWritePointer + sizeof(int), 0, BF_BLOCK_SIZE - sizeof(int));
 
-       // printf("255\n");
+
+
+        // printf("255\n");
         numOfEntries = 0;
         BF_Block *newBlockToWrite;
         BF_Block_Init(&newBlockToWrite);
+        BF_Block_SetDirty(blockToWrite);
+        BF_UnpinBlock(blockToWrite);
         for ( int i = 0; i < 9; ++i ) {
             rec_id = recordArray[i]->id;
-            //printf("id =%d\n",rec_id);
+            printf("id =%d\n", rec_id);
             block_index = 0;
             //we retrieve the first global depth bits
             for ( int i = 0; i < global_depth; i++ ) {
                 block_index += (rec_id % 2) * (int) pow(2, global_depth - i - 1);
                 rec_id /= 2;
             }
-            printf("blockindex:%d\n",block_index);
+            //printf("blockindex:%d\n", block_index);
             int newDestinationBlock;
             char *newBlockToWritePointer;
 
 
-
             int hashBlockIndex;
 
-            memcpy(&hashBlockIndex, firstBlockData + strlen("HF")+1 + sizeof(int) + block_index / 128 * sizeof(int), sizeof(int));
+            memcpy(&hashBlockIndex, firstBlockData + strlen("HF") + 1 + sizeof(int) + (block_index / 128) * sizeof(int),
+                   sizeof(int));
 
 
             //we find the corresponding hashblock
-            // printf("hasblockindex = %d\n",hashBlockIndex);
+           // printf("hasblockindex = %d\n", hashBlockIndex);
             CALL_BF(BF_GetBlock(fileDesc, hashBlockIndex, hashBlock));
 
 
-
-            hashBlockData= BF_Block_GetData(hashBlock);
-            memcpy(&newDestinationBlock, hashBlockData + (block_index%128) * sizeof(int), sizeof(int));
-            printf("newDestinationBlock:%d\n",newDestinationBlock);
-            printf("hasblockIndex:%d\n",hashBlockIndex);
+            hashBlockData = BF_Block_GetData(hashBlock);
+            memcpy(&newDestinationBlock, hashBlockData + (block_index % 128) * sizeof(int), sizeof(int));
+          //  printf("newDestinationBlock:%d\n", newDestinationBlock);
+          //  printf("hasblockIndex:%d\n", hashBlockIndex);
             CALL_BF(BF_GetBlock(fileDesc, newDestinationBlock, newBlockToWrite));
 
 
@@ -260,34 +299,42 @@ HT_ErrorCode HT_InsertEntry(int indexDesc, Record record) {
             //writing record to block
             memcpy(&numOfEntries, newBlockToWritePointer + sizeof(int), sizeof(int));
             numOfEntries++;
+            if ( numOfEntries == 9 ){
+                printf("stop\n");
+            }
             memcpy(newBlockToWritePointer + 2 * sizeof(int) + (numOfEntries - 1) * sizeof(Record), recordArray[i],
                    sizeof(Record));
 
             memcpy(newBlockToWritePointer + sizeof(int), &numOfEntries, sizeof(int));
             BF_Block_SetDirty(newBlockToWrite);
             CALL_BF(BF_UnpinBlock(newBlockToWrite));
+            CALL_BF( BF_UnpinBlock(hashBlock));
         }
 
 
-        for ( int i = 0; i <9 ; ++i ) {
-          //  free(recordArray[i]);
+        for ( int i = 0; i < 9; ++i ) {
+            //  free(recordArray[i]);
         }
-
+        BF_Block_Destroy(&newBlockToWrite);
     }
 
     BF_Block_SetDirty(secondBlock);
     BF_Block_SetDirty(firstBlock);
     CALL_BF(BF_UnpinBlock(secondBlock));
     CALL_BF(BF_UnpinBlock(firstBlock));
-    //printf("EXITING HT_ENTRY\n");
+    BF_Block_Destroy(&firstBlock);
+    BF_Block_Destroy(&secondBlock);
 
+
+    //printf("EXITING HT_ENTRY\n");
+    // if(global_depth==8)printEverything(indexDesc);
     return HT_OK;
 }
 
 HT_ErrorCode HT_PrintAllEntries(int indexDesc, int *id) {
     //printf("INSIDE PRINT\n");
     int fileDesc = OpenHashFiles[indexDesc].BFid;
-   // printf("Bfid:%d\n",fileDesc);
+    // printf("Bfid:%d\n",fileDesc);
     int block_index = 0;
     int rec_id = *id;
     char *firstBlockData, *secondBlockData;
@@ -302,8 +349,8 @@ HT_ErrorCode HT_PrintAllEntries(int indexDesc, int *id) {
 
 
     int global_depth;
-    memcpy(&global_depth, firstBlockData + strlen("HF")+1, sizeof(int));
-   // printf("317\n");
+    memcpy(&global_depth, firstBlockData + strlen("HF") + 1, sizeof(int));
+    // printf("317\n");
 
     /* we retrieve the address of the hashtable from the second block*/
     CALL_BF(BF_GetBlock(fileDesc, 1, secondBlock));
@@ -315,17 +362,18 @@ HT_ErrorCode HT_PrintAllEntries(int indexDesc, int *id) {
     }
 
     int hashBlockIndex;
-    memcpy(&hashBlockIndex, firstBlockData + strlen("HF")+1 + sizeof(int) + block_index / 128 * sizeof(int), sizeof(int));
-   // printf("330\n");
+    memcpy(&hashBlockIndex, firstBlockData + strlen("HF") + 1 + sizeof(int) + block_index / 128 * sizeof(int),
+           sizeof(int));
+    // printf("330\n");
     //char* hf= malloc(strlen("HF")+1);
     //strcpy(hf,firstBlockData);
-   // printf("sos:%s\n",hf);
+    // printf("sos:%s\n",hf);
 
     //we find the corresponding hashblock
     BF_Block *hashBlock;
     char *hashBlockData;
     BF_Block_Init(&hashBlock);
-   // printf("hasblockindex = %d\n",hashBlockIndex);
+    // printf("hasblockindex = %d\n",hashBlockIndex);
     CALL_BF(BF_GetBlock(fileDesc, hashBlockIndex, hashBlock));
     hashBlockData = BF_Block_GetData(hashBlock);
 
@@ -337,7 +385,7 @@ HT_ErrorCode HT_PrintAllEntries(int indexDesc, int *id) {
     char *blockForPrintdata;
     BF_Block_Init(&blockForPrint);
     CALL_BF(BF_GetBlock(fileDesc, destinationBlock, blockForPrint));
-    blockForPrintdata= BF_Block_GetData(blockForPrint);
+    blockForPrintdata = BF_Block_GetData(blockForPrint);
     int bucketEntries;
     //coredump!!!!!!
     memcpy(&bucketEntries, blockForPrintdata + sizeof(int), sizeof(int));
@@ -356,7 +404,7 @@ HT_ErrorCode HT_PrintAllEntries(int indexDesc, int *id) {
     }
 
     free(bucketRecords);
-   // printf("EXITING PRINT\n");
+    // printf("EXITING PRINT\n");
     CALL_BF(BF_UnpinBlock(secondBlock));
     CALL_BF(BF_UnpinBlock(firstBlock));
     CALL_BF(BF_UnpinBlock(hashBlock));
@@ -380,13 +428,15 @@ HT_ErrorCode Resize(int indexDesc, int destinationBlock, BF_Block *blockToWrite)
     /* we retrieve and update the global depth from block one */
     CALL_BF(BF_GetBlock(fileDesc, 0, firstBlock));
     firstBlockData = BF_Block_GetData(firstBlock);
+
+    //we increaze the global depth
     int global_depth;
-    memcpy(&global_depth, firstBlockData + strlen("HF")+1, sizeof(int));
+    memcpy(&global_depth, firstBlockData + strlen("HF") + 1, sizeof(int));
     global_depth++;
-    memcpy(firstBlockData + strlen("HF") +1, &global_depth, sizeof(int));
+    memcpy(firstBlockData + strlen("HF") + 1, &global_depth, sizeof(int));
     BF_Block_SetDirty(firstBlock);
     CALL_BF(BF_UnpinBlock(firstBlock));
-    printf("global in resize %d\n",global_depth);
+    printf("global depth in resize function is %d\n", global_depth);
 
     int size = (int) pow(2, global_depth);
     int *PointersArray = malloc(size * sizeof(int));
@@ -399,79 +449,128 @@ HT_ErrorCode Resize(int indexDesc, int destinationBlock, BF_Block *blockToWrite)
 
         //we change the pointers;
         for ( int i = (size - 1); i >= 0; i-- ) {
-            PointersArray[i] = PointersArray[i / 2];
+            int index = (int) floorf(i / 2);
+            PointersArray[i] = PointersArray[index];
         }
-
-      /*  printf("before split\n");
-        for ( int i = 0; i < size; ++i ) {
-            int value;
-            printf("%d\n", PointersArray[i]);
-        }*/
+        /*  printf("before split\n");
+          for ( int i = 0; i < size; ++i ) {
+              int value;
+              printf("%d\n", PointersArray[i]);
+          }*/
         SplitThePointers(PointersArray, destinationBlock, global_depth, fileDesc, blockToWrite);
 
         //we copy the pointers from the array back to the secondBlock;
         memcpy(secondBlockData, PointersArray, size * sizeof(int));
-        printf("after split\n");
-      /*  for ( int i = 0; i < size; ++i ) {
-            int value;
-            memcpy(&value,secondBlockData+i*sizeof(int),sizeof(int));
-            printf("value :%d\n",value);
-        }
-        printf("blockToWrite = %p\n",(void *)blockToWrite);
-        */
+        //  printf("after split\n");
+        /*  for ( int i = 0; i < size; ++i ) {
+              int value;
+              memcpy(&value,secondBlockData+i*sizeof(int),sizeof(int));
+              printf("value :%d\n",value);
+          }
+          printf("blockToWrite = %p\n",(void *)blockToWrite);
+          */
+        /*  if ( global_depth == 7 ) {
+              printf("423\n");
+              for ( int j = 0; j < 128; ++j ) {
+                  int v;
+                  memcpy(&v, secondBlockData + j * sizeof(int), sizeof(int));
+                  printf("%d\n", v);
+              }
+          }*/
+        BF_Block_SetDirty(firstBlock);
+        CALL_BF(BF_UnpinBlock(firstBlock));
+        CALL_BF(BF_UnpinBlock(secondBlock));
         return HT_OK;
     } else {
+        printf("GLOBAL DEPTH (line 432):%d\n", global_depth);
+        /*   if ( global_depth == 8 ) {
+               printf("435\n");
+               CALL_BF(BF_GetBlock(fileDesc, 1, secondBlock));
+               char *secondBlockData = BF_Block_GetData(secondBlock);
+               for ( int j = 0; j < 128; ++j ) {
+                   int v;
+                   memcpy(&v, secondBlockData + j * sizeof(int), sizeof(int));
+                   printf("%d\n", v);
+               }
+           }*/
 
 
         int blockNumber;
         int hashBlocks = (int) (pow(2, global_depth - 1) / maxIntsEntries);
+        printf("HASHBLOCKS ARE :%d\n", hashBlocks);
         // we copy the already existed hashblocks back to array
         for ( int i = 0; i < hashBlocks; ++i ) {
 
-            memcpy(&blockNumber, firstBlockData + strlen("HF")+1 + sizeof(int) + i * sizeof(int), sizeof(int));
+            memcpy(&blockNumber, firstBlockData + strlen("HF") + 1 + sizeof(int) + i * sizeof(int), sizeof(int));
+
+            printf("HASHBLOCK ID:%d\n", blockNumber);
+
             CALL_BF(BF_GetBlock(fileDesc, blockNumber, blockPtr));
             blockData = BF_Block_GetData(blockPtr);
-            memcpy(PointersArray + (i) * sizeof(int) * maxIntsEntries, blockData, maxIntsEntries * sizeof(int));
-           // CALL_BF(BF_UnpinBlock(blockPtr));
+            // memcpy(PointersArray + (i) * sizeof(int) * maxIntsEntries, blockData, maxIntsEntries * sizeof(int));
+            //printf("463\n");
+            printf("HASHBLOCK ID:%d\n", blockNumber);
+            /*  for ( int j = 0; j < 128; ++j ) {
+                  int v;
+                  memcpy(&v, blockData + j * sizeof(int), sizeof(int));
+                  PointersArray[j+i*maxIntsEntries]=v;
+               //   printf("j: %d = %d\n", j, v);
+              }*/
 
+            CALL_BF(BF_UnpinBlock(blockPtr));
         }
 
+        for ( int i = 0; i < (int) pow(2, global_depth - 1); ++i ) {
+            //printf("ARRAY[%d]= %d\n",i,PointersArray[i]);
+        }
         //we change the pointers;
         for ( int i = (int) pow(2, global_depth) - 1; i >= 0; i-- ) {
-            PointersArray[i] = PointersArray[i / 2];
+            int index = (int) floorf(i / 2);
+            PointersArray[i] = PointersArray[index];
+            //  printf("ARRAY[%d]= %d\n",i,PointersArray[i]);
         }
 
-        SplitThePointers(PointersArray, destinationBlock, global_depth, fileDesc, blockToWrite);
 
+        SplitThePointers(PointersArray, destinationBlock, global_depth, fileDesc, blockToWrite);
+        printf("after split\n");
 
         int newBlocks = ((int) pow(2, global_depth) / maxIntsEntries);
+        BF_Block *newBlock;
+        BF_Block_Init(&newBlock);
+        printf("new blocks:%d\n", newBlocks);
         for ( int i = hashBlocks; i < newBlocks; ++i ) {
-            BF_Block *newBlock;
-            BF_Block_Init(&newBlock);// it allocates the suitable space in memory
+            // it allocates the suitable space in memory
             /* we allocate the blocks at the end of the BF_Block file */
             CALL_BF(BF_AllocateBlock(fileDesc, newBlock));
             CALL_BF(BF_GetBlockCounter(fileDesc, &blockNumber));
             blockNumber--;
             //we take the number of the last-allocated block;
-            memcpy(firstBlockData + strlen("HF") +1+ sizeof(int) + i * sizeof(int), &blockNumber, sizeof(int));
+            memcpy(firstBlockData + strlen("HF") + 1 + sizeof(int) + i * sizeof(int), &blockNumber, sizeof(int));
             // BF_Block_SetDirty(newBlock);
-            //CALL_BF(BF_UnpinBlock(newBlock));
+            CALL_BF(BF_UnpinBlock(newBlock));
         }
-
+        BF_Block *newBlockToWrite;
+        BF_Block_Init(&newBlockToWrite);
         for ( int i = 0; i < newBlocks; ++i ) {
-            memcpy(&blockNumber, firstBlockData + strlen("HF")+1 + sizeof(int) + i * sizeof(int), sizeof(int));
-            BF_Block *newBlockToWrite;
-            BF_Block_Init(&newBlockToWrite);// it allocates the suitable space in memory
+            memcpy(&blockNumber, firstBlockData + strlen("HF") + 1 + sizeof(int) + i * sizeof(int), sizeof(int));
+            // it allocates the suitable space in memory
             CALL_BF(BF_GetBlock(fileDesc, blockNumber, newBlockToWrite));
             blockData = BF_Block_GetData(newBlockToWrite);
             memcpy(blockData, PointersArray + i * maxIntsEntries, maxIntsEntries * sizeof(int));
+            printf("HASHBLOCK ID:%d\n", blockNumber);
+            printf("copy from the array back to hashblocks\n");
+            /*  for ( int j = 0; j < 128; ++j ) {
+                  int v;
+                  memcpy(&v, blockData + j * sizeof(int), sizeof(int));
+                  printf("j: %d = %d\n", j, v);
+              }*/
             BF_Block_SetDirty(newBlockToWrite);
             CALL_BF(BF_UnpinBlock(newBlockToWrite));
         }
 
 
     }
-    printf("blockToWrite = %p\n",(void *)blockToWrite);
+    // printf("blockToWrite = %p\n", (void *) blockToWrite);
     BF_Block_SetDirty(firstBlock);
     CALL_BF(BF_UnpinBlock(firstBlock));
     BF_Block_SetDirty(secondBlock);
@@ -485,33 +584,33 @@ SplitThePointers(int *pointersArray, int destinationBlock, int global_depth, int
 
 
     char *blockToWritePointer = BF_Block_GetData(blockToWrite);
-
     BF_Block *newBlock;
     int lastBlock;
     BF_Block_Init(&newBlock);
     CALL_BF(BF_AllocateBlock(fileDesc, newBlock));
     CALL_BF(BF_GetBlockCounter(fileDesc, &lastBlock));
+    char *newBlockData = BF_Block_GetData(newBlock);
     lastBlock--;
-   // printf("the new block id is %d\n",lastBlock);
+    printf("the new block id is %d\n", lastBlock);
 
     int newLocalDepth;
+    // we trieve the local depth from the the block with the 8 entries
     memcpy(&newLocalDepth, blockToWritePointer, sizeof(int));
     newLocalDepth++;
+
+    // we increaze it by one and we write it back
     memcpy(blockToWritePointer, &newLocalDepth, sizeof(int));
 
-
     /* we update the local depth of the new block as well */
-    char *newBlockData = BF_Block_GetData(newBlock);
     memcpy(newBlockData, &newLocalDepth, sizeof(int));
-    //memcpy(&global_depth, blockToWritePointer, sizeof(int));
-   // printf("destinationblock in splitpointers %d\n",destinationBlock);
-    int counter = 0, bb, flag = 0, lastIndex=-1;
+
+    int counter = 0, flag = 0, lastIndex = -1;
     //printf("GLOBAL DEPTH IN SPLIT %d\n",global_depth);
-    int size=(int) pow(2, global_depth);
+    int size = (int) pow(2, global_depth);
     for ( int i = 0; i < size; i++ ) {
         //printf("pointersArray[%d]=%d\n",i,pointersArray[i]);
         if ( pointersArray[i] == destinationBlock ) {
-          //  printf("index %d\n",i);
+            //  printf("index %d\n",i);
             flag = 1;
             counter++;
         } else if ( flag ) {
@@ -521,9 +620,9 @@ SplitThePointers(int *pointersArray, int destinationBlock, int global_depth, int
             break;
         }
     }
-    if(lastIndex==-1)lastIndex=size-1;
+    if ( lastIndex == -1 )lastIndex = size - 1;
     for ( int i = 0; i < counter / 2; ++i ) {
-       // printf("lastindex=%d\n",lastIndex);
+        // printf("lastindex=%d\n",lastIndex);
         pointersArray[lastIndex] = lastBlock;
         lastIndex--;
     }
@@ -531,30 +630,129 @@ SplitThePointers(int *pointersArray, int destinationBlock, int global_depth, int
     BF_Block_SetDirty(newBlock);
     CALL_BF(BF_UnpinBlock(newBlock));
     BF_Block_SetDirty(blockToWrite);
-    CALL_BF(BF_UnpinBlock(blockToWrite));
+
 
     return HT_OK;
 }
-HT_ErrorCode printEverything(int indexDesc){
+
+HT_ErrorCode printEverything(int indexDesc) {
     int fileDesc = OpenHashFiles[indexDesc].BFid;
     int uniqueBlocks;
-    BF_GetBlockCounter(fileDesc,&uniqueBlocks);
-    BF_Block * blockPtr;
+    BF_GetBlockCounter(fileDesc, &uniqueBlocks);
+    BF_Block *blockPtr;
     BF_Block_Init(&blockPtr);
-    char* blockPtrData;
-    for ( int i = 2; i <uniqueBlocks ; ++i ) {
-        BF_GetBlock(fileDesc,i,blockPtr);
-        blockPtrData= BF_Block_GetData(blockPtr);
+    char *blockPtrData;
+    for ( int i = 2; i < uniqueBlocks - 1; ++i ) {
+        BF_GetBlock(fileDesc, i, blockPtr);
+        blockPtrData = BF_Block_GetData(blockPtr);
         int entries;
-        memcpy(&entries,blockPtrData+ sizeof(int), sizeof(int));
+        memcpy(&entries, blockPtrData + sizeof(int), sizeof(int));
         Record r;
+        printf("entries : %d\n", entries);
         for ( int j = 0; j < entries; ++j ) {
-            memcpy(&r,blockPtrData+2* sizeof(int)+j* sizeof(Record), sizeof(Record));
+            memcpy(&r, blockPtrData + 2 * sizeof(int) + j * sizeof(Record), sizeof(Record));
             printf("Hash Block: %d || Bucket Number: %d || ID: %d || Name: %s || Surname: %s || City: %s\n",
                    1, i, r.id, r.name,
                    r.surname, r.city);
         }
         CALL_BF(BF_UnpinBlock(blockPtr));
+        //BF_Block_Destroy(&blockPtr);
+    }
+    BF_Block_Destroy(&blockPtr);
+    return HT_OK;
+}
+
+HT_ErrorCode CopyBlocksToArray(int *arrayOfPointers, int fileDesc, int global_depth) {
+
+
+    BF_Block *secondBlock;
+    BF_Block_Init(&secondBlock);
+
+    char *firstBlockData;
+    if ( global_depth <= 7 ) {
+        CALL_BF(BF_GetBlock(fileDesc, 1, secondBlock));
+        char *secondBlockData = BF_Block_GetData(secondBlock);
+        memcpy(arrayOfPointers, secondBlockData, (int) pow(2, global_depth) * sizeof(int));
+        CALL_BF(BF_UnpinBlock(secondBlock));
+        return HT_OK;
+
+    }
+    BF_Block *firstBlock;
+    BF_Block_Init(&firstBlock);
+    firstBlockData = BF_Block_GetData(firstBlock);
+
+    BF_Block *HashBlockPtr;
+    BF_Block_Init(&HashBlockPtr);
+    char *HashBlockData;
+    HashBlockData = BF_Block_GetData(HashBlockPtr);
+
+    int hashBlocks = (int) (pow(2, global_depth) / 128);
+    printf("HASHBLOCKS ARE :%d\n", hashBlocks);
+    // we copy the already existed hashblocks back to array
+    int blockNumber;
+    for ( int i = 0; i < hashBlocks; ++i ) {
+
+        memcpy(&blockNumber, firstBlockData + strlen("HF") + 1 + sizeof(int) + i * sizeof(int), sizeof(int));
+
+        printf("HASHBLOCK ID:%d\n", blockNumber);
+
+        CALL_BF(BF_GetBlock(fileDesc, blockNumber, HashBlockPtr));
+        HashBlockData = BF_Block_GetData(HashBlockPtr);
+
+        printf("HASHBLOCK ID:%d\n", blockNumber);
+        for ( int j = 0; j < 128; ++j ) {
+            int v;
+            memcpy(&v, HashBlockData + j * sizeof(int), sizeof(int));
+            arrayOfPointers[j + i * 128] = v;
+            //   printf("j: %d = %d\n", j, v);
+        }
+
+        CALL_BF(BF_UnpinBlock(HashBlockPtr));
+    }
+    CALL_BF(BF_UnpinBlock(firstBlock));
+    return HT_OK;
+}
+
+HT_ErrorCode CopyArrayToBlocks(int *arrayOfPointers, int global_depth, int fileDesc) {
+
+
+    BF_Block *secondBlock;
+    BF_Block_Init(&secondBlock);
+    char *firstBlockData;
+
+
+    if ( global_depth <= 7 ) {
+        int size = (int) pow(2, global_depth);
+        CALL_BF(BF_GetBlock(fileDesc, 1, secondBlock));
+        char *secondBlockData = BF_Block_GetData(secondBlock);
+        memcpy(secondBlockData, arrayOfPointers, size * sizeof(int));
+        BF_Block_SetDirty(secondBlock);
+        CALL_BF(BF_UnpinBlock(secondBlock));
+        return HT_OK;
+    }
+    BF_Block *firstBlock;
+    BF_Block_Init(&firstBlock);
+    firstBlockData = BF_Block_GetData(firstBlock);
+    BF_Block *newBlockToWrite;
+    BF_Block_Init(&newBlockToWrite);
+    int newBlocks = ((int) pow(2, global_depth) / 128);
+    int blockNumber;
+    char *blockData;
+    for ( int i = 0; i < newBlocks; ++i ) {
+        memcpy(&blockNumber, firstBlockData + strlen("HF") + 1 + sizeof(int) + i * sizeof(int), sizeof(int));
+        // it allocates the suitable space in memory
+        CALL_BF(BF_GetBlock(fileDesc, blockNumber, newBlockToWrite));
+        blockData = BF_Block_GetData(newBlockToWrite);
+        memcpy(blockData, arrayOfPointers + i * 128, 128 * sizeof(int));
+        printf("HASHBLOCK ID:%d\n", blockNumber);
+        printf("copy from the array back to hashblocks\n");
+        for ( int j = 0; j < 128; ++j ) {
+            int v;
+            memcpy(&v, blockData + j * sizeof(int), sizeof(int));
+            printf("j: %d = %d\n", j, v);
+        }
+        BF_Block_SetDirty(newBlockToWrite);
+        CALL_BF(BF_UnpinBlock(newBlockToWrite));
     }
     return HT_OK;
 }
