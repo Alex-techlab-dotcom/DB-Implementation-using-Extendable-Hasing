@@ -20,6 +20,17 @@ typedef struct HFcell{
     char* FileName;
 }HFcell;
 
+
+
+#define CALL_OR_DIE(call)     \
+  {                           \
+    HT_ErrorCode code = call; \
+    if (code != HT_OK) {      \
+      printf("Error\n");      \
+      exit(code);             \
+    }                         \
+  }
+
 HFcell OpenHashFiles[MAX_OPEN_FILES];
 HT_ErrorCode printEverything(int indexDesc);
 

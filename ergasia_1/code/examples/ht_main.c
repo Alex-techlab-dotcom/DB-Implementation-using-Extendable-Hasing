@@ -6,7 +6,7 @@
 #include "../include/hash_file.h"
 
 #define RECORDS_NUM 1000 // you can change it if you want
-#define GLOBAL_DEPT 2 // you can change it if you want
+#define GLOBAL_DEPT 3 // you can change it if you want
 #define FILE_NAME "data.db"
 
 const char* names[] = {
@@ -52,14 +52,6 @@ const char* cities[] = {
         "Miami"
 };
 
-#define CALL_OR_DIE(call)     \
-  {                           \
-    HT_ErrorCode code = call; \
-    if (code != HT_OK) {      \
-      printf("Error\n");      \
-      exit(code);             \
-    }                         \
-  }
 
 int main() {
 
@@ -75,7 +67,7 @@ int main() {
     int r;
     printf("Insert Entries\n");
     // Insertion of 1000 entries!
-    int numOfEntries=60000;
+    int numOfEntries=10000;
     for (int id = 0; id < numOfEntries; ++id) {
         // create a record
         record.id = id;
@@ -94,16 +86,9 @@ int main() {
     }
 
     printf("RUN PrintAllEntries\n");
-    //CALL_OR_DIE(printEverything(indexDesc));
     printf("\n\n\n\n");
 
-    for ( int i = 0; i < numOfEntries; ++i ) {
-        CALL_OR_DIE(HT_PrintAllEntries(indexDesc, &i));
-    }
-    CALL_OR_DIE(printEverything(indexDesc));
-    //CALL_OR_DIE(HT_PrintAllEntries(indexDesc, &id));
-    //CALL_OR_DIE(HT_PrintAllEntries(indexDesc, NULL));
-
+    CALL_OR_DIE(HT_PrintAllEntries(indexDesc, NULL));
     CALL_OR_DIE(HT_CloseFile(indexDesc));
     BF_Close();
 }
