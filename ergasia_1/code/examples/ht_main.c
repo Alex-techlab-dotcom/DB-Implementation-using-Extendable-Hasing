@@ -75,7 +75,7 @@ int main() {
     int r;
     printf("Insert Entries\n");
     // Insertion of 1000 entries!
-    int numOfEntries=1000;
+    int numOfEntries=60000;
     for (int id = 0; id < numOfEntries; ++id) {
         // create a record
         record.id = id;
@@ -100,6 +100,7 @@ int main() {
     for ( int i = 0; i < numOfEntries; ++i ) {
         CALL_OR_DIE(HT_PrintAllEntries(indexDesc, &i));
     }
+    CALL_OR_DIE(printEverything(indexDesc));
     //CALL_OR_DIE(HT_PrintAllEntries(indexDesc, &id));
     //CALL_OR_DIE(HT_PrintAllEntries(indexDesc, NULL));
 
