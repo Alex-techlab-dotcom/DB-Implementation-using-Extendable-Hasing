@@ -85,10 +85,8 @@ int main() {
 
     }
 
-    printf("RUN PrintAllEntries\n");
-    printf("\n\n\n\n");
+    CALL_OR_DIE(HashStatistics(FILE_NAME));
 
-    CALL_OR_DIE(HT_PrintAllEntries(indexDesc, NULL));
     CALL_OR_DIE(HT_CloseFile(indexDesc));
     BF_Close();
 }
