@@ -8,6 +8,7 @@
 #define RECORDS_NUM 1000 // you can change it if you want
 #define GLOBAL_DEPT 3 // you can change it if you want
 #define FILE_NAME "data.db"
+#define SECOND_FILE_NAME "Data.db"
 
 const char* names[] = {
         "Yannis",
@@ -59,15 +60,21 @@ int main() {
 
     CALL_OR_DIE(HT_Init());
     int indexDesc;
+    int indexDesc2;
     CALL_OR_DIE(HT_CreateIndex(FILE_NAME, GLOBAL_DEPT));// creates a HashFile:"data.db" and gives GlobalDept=2 for the hashmap
     CALL_OR_DIE(HT_OpenIndex(FILE_NAME, &indexDesc)); //it opens "data.db" and it returns its index( lets say it is index 10 ) to the HashFiles Array[20]
 
+    CALL_OR_DIE(HT_CreateIndex(SECOND_FILE_NAME, GLOBAL_DEPT));// creates a HashFile:"data.db" and gives GlobalDept=2 for the hashmap
+    CALL_OR_DIE(HT_OpenIndex(SECOND_FILE_NAME, &indexDesc2)); //it opens "data.db" and it returns its index( lets say it is index 10 ) to the HashFiles Ar
     Record record;
+    printf("indexDesc %d\n",indexDesc);
+    printf("indexDesc2 %d\n",indexDesc2);
+
     srand(12569874);
     int r;
     printf("Insert Entries\n");
     // Insertion of 1000 entries!
-    int numOfEntries=10000;
+    int numOfEntries=10;
     for (int id = 0; id < numOfEntries; ++id) {
         // create a record
         record.id = id;
@@ -81,12 +88,35 @@ int main() {
 
         CALL_OR_DIE(HT_InsertEntry(indexDesc, record));// Array[indexDesc=10].inserts(record)
       //  CALL_OR_DIE(HT_PrintAllEntries(indexDesc, &id));
-
-
+       // CALL_OR_DIE(HT_InsertEntry(indexDesc2, record));
     }
+    HT_PrintAllEntries(indexDesc,NULL);
+    printf("second insertion\n");
+    for (int id = 0; id < numOfEntries; ++id) {
+        // create a record
+        record.id = id;
+        // printf("record.id=%d\n",record.id);
+        r = rand() % 12;
+        memcpy(record.name, names[r], strlen(names[r]) + 1);
+        r = rand() % 12;
+        memcpy(record.surname, surnames[r], strlen(surnames[r]) + 1);
+        r = rand() % 10;
+        memcpy(record.city, cities[r], strlen(cities[r]) + 1);
 
-    CALL_OR_DIE(HashStatistics(FILE_NAME));
-
+     //   CALL_OR_DIE(HT_InsertEntry(indexDesc, record));// Array[indexDesc=10].inserts(record)
+        //  CALL_OR_DIE(HT_PrintAllEntries(indexDesc, &id));
+        CALL_OR_DIE(HT_InsertEntry(indexDesc2, record));
+    }
+    int five=5;
+    HT_PrintAllEntries(indexDesc2,&five);
     CALL_OR_DIE(HT_CloseFile(indexDesc));
+    CALL_OR_DIE(HT_CloseFile(indexDesc2));
+    CALL_OR_DIE(HT_OpenIndex(FILE_NAME, &indexDesc)); //it opens "data.db" and it returns its index( lets say it is index 10 ) to the HashFiles Array[20]
+    CALL_OR_DIE(HT_OpenIndex(SECOND_FILE_NAME, &indexDesc2)); //it opens "data.db" and it returns its index( lets say it is index 10 ) to the HashFiles Array[20]
+    CALL_OR_DIE(HashStatistics(FILE_NAME));
+    CALL_OR_DIE(HT_CloseFile(indexDesc2));
+    CALL_OR_DIE(HT_CloseFile(indexDesc));
+
     BF_Close();
+
 }

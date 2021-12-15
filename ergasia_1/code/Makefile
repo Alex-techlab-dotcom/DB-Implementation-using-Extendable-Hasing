@@ -6,3 +6,6 @@ bf:
 	@echo " Compile bf_main ...";
 	gcc -I ./include/ -L ./lib/ -Wl,-rpath,./lib/ ./examples/bf_main.c -lbf -o ./build/runner -O2
 
+ht2:
+	@echo " Compile ht_secondMain ...";
+	gcc -g -I ./include/ -L ./lib/ -Wl,-rpath,./lib/ ./examples/ht_secondMain.c ./src/hash_file.c -lm -lbf -o ./build/runner -O2

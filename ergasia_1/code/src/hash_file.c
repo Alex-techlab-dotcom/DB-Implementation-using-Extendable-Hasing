@@ -26,10 +26,10 @@ HT_ErrorCode CopyArrayToBlocks(int *arrayOfPointers, int global_depth, int fileD
 HT_ErrorCode Resize(int indexDesc, int destinationBlock, BF_Block *blockToWrite);
 
 HT_ErrorCode HT_Init() {
+    BF_Init(LRU);
     for ( int i = 0; i < MAX_OPEN_FILES; ++i ) {
         OpenHashFiles[i].FileName = NULL;
     }
-    BF_Init(LRU);
     return HT_OK;
 }
 
@@ -76,12 +76,15 @@ HT_ErrorCode HT_CreateIndex(const char *filename, int depth) {
         CALL_BF(BF_UnpinBlock(block));
         int b = offset + 2;
         memcpy(secondBlockData + offset * sizeof(int), &b, sizeof(int));
+        BF_Block_Destroy(&block);
     }
 
     BF_Block_SetDirty(secondBlock);
     BF_Block_SetDirty(firstBlock);
     CALL_BF(BF_UnpinBlock(secondBlock));
     CALL_BF(BF_UnpinBlock(firstBlock));
+    BF_Block_Destroy(&secondBlock);
+    BF_Block_Destroy(&firstBlock);
     return HT_OK;
 }
 
@@ -270,6 +273,7 @@ HT_ErrorCode HT_InsertEntry(int indexDesc, Record record) {
         }
 
         BF_Block_Destroy(&newBlockToWrite);
+        BF_Block_Destroy(&hashBlock);
     }
 
     BF_Block_SetDirty(secondBlock);
@@ -278,6 +282,8 @@ HT_ErrorCode HT_InsertEntry(int indexDesc, Record record) {
     CALL_BF(BF_UnpinBlock(firstBlock));
     BF_Block_Destroy(&firstBlock);
     BF_Block_Destroy(&secondBlock);
+    BF_Block_Destroy(&blockToWrite);
+
 
     return HT_OK;
 }
@@ -353,6 +359,10 @@ HT_ErrorCode HT_PrintAllEntries(int indexDesc, int *id) {
     CALL_BF(BF_UnpinBlock(firstBlock));
     CALL_BF(BF_UnpinBlock(hashBlock));
     CALL_BF(BF_UnpinBlock(blockForPrint));
+    BF_Block_Destroy(&secondBlock);
+    BF_Block_Destroy(&firstBlock);
+    BF_Block_Destroy(&hashBlock);
+    BF_Block_Destroy(&blockForPrint);
     return HT_OK;
 }
 
@@ -401,6 +411,9 @@ HT_ErrorCode Resize(int indexDesc, int destinationBlock, BF_Block *blockToWrite)
         BF_Block_SetDirty(firstBlock);
         CALL_BF(BF_UnpinBlock(firstBlock));
         CALL_BF(BF_UnpinBlock(secondBlock));
+        BF_Block_Destroy(&secondBlock);
+        //BF_Block_Destroy(&firstBlock);
+        BF_Block_Destroy(&blockPtr);
         return HT_OK;
     } else {
 
@@ -454,12 +467,16 @@ HT_ErrorCode Resize(int indexDesc, int destinationBlock, BF_Block *blockToWrite)
             BF_Block_SetDirty(newBlockToWrite);
             CALL_BF(BF_UnpinBlock(newBlockToWrite));
         }
-
+        BF_Block_Destroy(&newBlock);
+        BF_Block_Destroy(&newBlockToWrite);
     }
     BF_Block_SetDirty(firstBlock);
     CALL_BF(BF_UnpinBlock(firstBlock));
     BF_Block_SetDirty(secondBlock);
     CALL_BF(BF_UnpinBlock(secondBlock));
+    BF_Block_Destroy(&secondBlock);
+    BF_Block_Destroy(&firstBlock);
+   // BF_Block_Destroy(&firstBlock);
     free(PointersArray);
     return HT_OK;
 
@@ -508,6 +525,7 @@ SplitThePointers(int *pointersArray, int destinationBlock, int global_depth, int
 
     BF_Block_SetDirty(newBlock);
     CALL_BF(BF_UnpinBlock(newBlock));
+    BF_Block_Destroy(&newBlock);
     BF_Block_SetDirty(blockToWrite);
 
 
@@ -543,7 +561,6 @@ HT_ErrorCode printEverything(int indexDesc) {
 
     for ( int i = 1; i < uniqueBlocks; ++i ) {
         if(i==hashBlocksArray[counter]){
-            printf("inside if hashblock id is %d\n",hashBlocksArray[counter]);
             if(counter+1<iterations){
                 counter++;
             }
@@ -629,6 +646,7 @@ HT_ErrorCode CopyArrayToBlocks(int *arrayOfPointers, int global_depth, int fileD
         memcpy(secondBlockData, arrayOfPointers, size * sizeof(int));
         BF_Block_SetDirty(secondBlock);
         CALL_BF(BF_UnpinBlock(secondBlock));
+        BF_Block_Destroy(&secondBlock);
         return HT_OK;
     }
     BF_Block *firstBlock;
@@ -650,6 +668,8 @@ HT_ErrorCode CopyArrayToBlocks(int *arrayOfPointers, int global_depth, int fileD
         BF_Block_SetDirty(newBlockToWrite);
         CALL_BF(BF_UnpinBlock(newBlockToWrite));
     }
+    BF_Block_Destroy(&firstBlock);
+    BF_Block_Destroy(&newBlockToWrite);
     return HT_OK;
 }
 
