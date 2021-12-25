@@ -1,47 +1,66 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <time.h>
 #include "bf.h"
 #include "hash_file.h"
-#define MAX_OPEN_FILES 20
 
-#define CALL_BF(call)       \
-{                           \
-  BF_ErrorCode code = call; \
-  if (code != BF_OK) {         \
-    BF_PrintError(code);    \
-    return HP_ERROR;        \
-  }                         \
+#define RECORDS_NUM 1000 // you can change it if you want
+#define GLOBAL_DEPT 2 // you can change it if you want
+#define FILE_NAME "data.db"
+
+const char* names[] = {
+        "Yannis",
+        "Christofos",
+        "Sofia",
+        "Marianna",
+        "Vagelis",
+        "Maria",
+        "Iosif",
+        "Dionisis",
+        "Konstantina",
+        "Theofilos",
+        "Giorgos",
+        "Dimitris"
+};
+
+const char* surnames[] = {
+        "Ioannidis",
+        "Svingos",
+        "Karvounari",
+        "Rezkalla",
+        "Nikolopoulos",
+        "Berreta",
+        "Koronis",
+        "Gaitanis",
+        "Oikonomou",
+        "Mailis",
+        "Michas",
+        "Halatsis"
+};
+
+const char* cities[] = {
+        "Athens",
+        "San Francisco",
+        "Los Angeles",
+        "Amsterdam",
+        "London",
+        "New York",
+        "Tokyo",
+        "Hong Kong",
+        "Munich",
+        "Miami"
+};
+
+#define CALL_OR_DIE(call)     \
+  {                           \
+    HT_ErrorCode code = call; \
+    if (code != HT_OK) {      \
+      printf("Error\n");      \
+      exit(code);             \
+    }                         \
+  }
+
+int main() {
+
 }
-
-HT_ErrorCode HT_Init() {
-    //insert code here
-    return HT_OK;
-}
-
-HT_ErrorCode HT_CreateIndex(const char *filename, int depth) {
-    //insert code here
-    return HT_OK;
-}
-
-HT_ErrorCode HT_OpenIndex(const char *fileName, int *indexDesc){
-    //insert code here
-    return HT_OK;
-}
-
-HT_ErrorCode HT_CloseFile(int indexDesc) {
-    //insert code here
-    return HT_OK;
-}
-
-HT_ErrorCode HT_InsertEntry(int indexDesc, Record record) {
-    //insert code here
-    return HT_OK;
-}
-
-HT_ErrorCode HT_PrintAllEntries(int indexDesc, int *id) {
-    //insert code here
-    return HT_OK;
-}
-
