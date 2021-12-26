@@ -66,13 +66,15 @@ int main() {
 
 
     Record record;
-    printf("indexDesc %d\n",indexDesc);
+   // printf("indexDesc %d\n",indexDesc);
 
     srand(12569874);
     int r;
     printf("Insert Entries\n");
     // Insertion of 1000 entries!
     int numOfEntries=50000;
+    UpdateRecordArray array;
+    int tupleId;
     for (int id = 0; id < numOfEntries; ++id) {
         // create a record
         record.id = id;
@@ -84,7 +86,8 @@ int main() {
         r = rand() % 10;
         memcpy(record.city, cities[r], strlen(cities[r]) + 1);
 
-        CALL_OR_DIE(HT_InsertEntry(indexDesc, record));// Array[indexDesc=10].inserts(record)
+        CALL_OR_DIE(HT_InsertEntry(indexDesc, record,&tupleId,&array));// Array[indexDesc=10].inserts(record)
+
     }
     HT_PrintAllEntries(indexDesc,NULL);
     CALL_OR_DIE(HT_CloseFile(indexDesc));

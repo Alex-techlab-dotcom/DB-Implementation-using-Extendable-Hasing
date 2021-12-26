@@ -75,6 +75,7 @@ int main() {
     printf("Insert Entries\n");
     // Insertion of 1000 entries!
     int numOfEntries=10;
+
     for (int id = 0; id < numOfEntries; ++id) {
         // create a record
         record.id = id;

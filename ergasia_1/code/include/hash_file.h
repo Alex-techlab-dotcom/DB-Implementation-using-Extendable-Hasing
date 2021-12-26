@@ -20,7 +20,16 @@ typedef struct HFcell{
     char* FileName;
 }HFcell;
 
+typedef struct UpdateRecordNode{
+    Record* recordPointer;
+    int bucketId;
+    int position;
+}UpdateRecordNode;
 
+typedef struct UpdateRecordArray{
+    UpdateRecordNode array[8];
+}
+UpdateRecordArray;
 
 #define CALL_OR_DIE(call)     \
   {                           \
@@ -76,7 +85,9 @@ HT_ErrorCode HT_CloseFile(
  */
 HT_ErrorCode HT_InsertEntry(
 	int indexDesc,	/* θέση στον πίνακα με τα ανοιχτά αρχεία */
-	Record record		/* δομή που προσδιορίζει την εγγραφή */
+	Record record, /* δομή που προσδιορίζει την εγγραφή */
+    int *tupleId,
+    UpdateRecordArray  * updateArray
 	);
 
 /*
