@@ -28,6 +28,7 @@ typedef struct {  //μπορειτε να αλλαξετε τη δομη συμ�
 	
 } UpdateRecordArray;
 
+HFcell OpenSHTFiles[MAX_OPEN_FILES];
 
 HT_ErrorCode SHT_Init();
 

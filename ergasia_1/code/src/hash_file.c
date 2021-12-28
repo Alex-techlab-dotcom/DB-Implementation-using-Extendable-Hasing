@@ -191,6 +191,8 @@ HT_ErrorCode HT_InsertEntry(int indexDesc, Record record, int *tupleId, UpdateRe
         *tupleId = ((destinationBlock + 1) * (BF_BLOCK_SIZE - 2 * sizeof(int)) / sizeof(Record)) + numOfEntries;
         //updateArray = NULL; // IT SIGNALS THAT NO SPLIT WAS NEEDED
 
+        updateArray->hasResults=0;
+
         BF_Block_SetDirty(blockToWrite);
         CALL_BF(BF_UnpinBlock(blockToWrite));
 
@@ -217,6 +219,7 @@ HT_ErrorCode HT_InsertEntry(int indexDesc, Record record, int *tupleId, UpdateRe
         memcpy(&global_depth, firstBlockData + strlen("HF") + 1, sizeof(int));
 
         /*we reinsert the records of the overflow-block*/
+        updateArray->hasResults=1;
         Record *recordArray[9];
         for ( int i = 0; i < 8; ++i ) {
             recordArray[i] = malloc(sizeof(Record));

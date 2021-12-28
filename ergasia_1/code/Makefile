@@ -1,6 +1,6 @@
 sht:
-	@echo " Compile ht_main ...";
-	gcc -I ./include/ -L ./lib/ -Wl,-rpath,./lib/ ./examples/sht_main.c ./src/hash_file.c ./src/sht_file.c -lbf -o ./build/runner -O2
+	@echo " Compile sht_main ...";
+	gcc -g -I ./include/ -L ./lib/ -Wl,-rpath,./lib/ ./examples/sht_main.c ./src/hash_file.c ./src/sht_file.c -lm -lbf -o ./build/runner -O2
 
 ht:
 	@echo " Compile ht_main ...";

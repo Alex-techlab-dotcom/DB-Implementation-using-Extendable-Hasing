@@ -28,6 +28,7 @@ typedef struct UpdateRecordNode{
 
 typedef struct UpdateRecordArray{
     UpdateRecordNode array[8];
+    char hasResults;
 }
 UpdateRecordArray;
 
@@ -41,6 +42,7 @@ UpdateRecordArray;
   }
 
 HFcell OpenHashFiles[MAX_OPEN_FILES];
+
 HT_ErrorCode printEverything(int indexDesc);
 
 /*
