@@ -22,8 +22,8 @@ typedef struct HFcell{
 
 typedef struct UpdateRecordNode{
     Record* recordPointer;
-    int bucketId;
-    int position;
+    int new_tupleid;
+    int old_tupleid;
 }UpdateRecordNode;
 
 typedef struct UpdateRecordArray{

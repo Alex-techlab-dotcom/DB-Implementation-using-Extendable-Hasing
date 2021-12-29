@@ -117,7 +117,6 @@ HT_ErrorCode HT_CloseFile(int indexDesc) {
 HT_ErrorCode HT_InsertEntry(int indexDesc, Record record, int *tupleId, UpdateRecordArray *updateArray) {
     BF_Block *firstBlock, *secondBlock;
     char *firstBlockData, *secondBlockData;
-    char HtAddress[20];
     int fileDesc = OpenHashFiles[indexDesc].BFid;
     int numOfEntries;
 
@@ -226,6 +225,7 @@ HT_ErrorCode HT_InsertEntry(int indexDesc, Record record, int *tupleId, UpdateRe
             memcpy(recordArray[i], blockToWritePointer + 2 * sizeof(int) + i * sizeof(Record), sizeof(Record));
            // updateArray[i]->recordPointer = malloc(sizeof(Record));
             updateArray->array[i].recordPointer=recordArray[i];
+            updateArray->array[i].old_tupleid=((destinationBlock + 1) * (BF_BLOCK_SIZE - 2 * sizeof(int)) / sizeof(Record)) + i+1;
         }
         //recordArray[8] = malloc(sizeof(Record));
         recordArray[8] = &record;
@@ -279,12 +279,9 @@ HT_ErrorCode HT_InsertEntry(int indexDesc, Record record, int *tupleId, UpdateRe
 
             memcpy(newBlockToWritePointer + sizeof(int), &numOfEntries, sizeof(int));
 
-            if ( i == 8 ) {
-                *tupleId = ((newDestinationBlock + 1) * (BF_BLOCK_SIZE - 2 * sizeof(int)) / sizeof(Record)) + numOfEntries;
-            }
-            else{
-                updateArray->array[i].position = numOfEntries;
-                updateArray->array[i].bucketId = newDestinationBlock;
+            *tupleId = ((newDestinationBlock + 1) * (BF_BLOCK_SIZE - 2 * sizeof(int)) / sizeof(Record)) + numOfEntries;
+            if ( i != 8 ) {
+                updateArray->array[i].new_tupleid=(*tupleId);
             }
 
             BF_Block_SetDirty(newBlockToWrite);
