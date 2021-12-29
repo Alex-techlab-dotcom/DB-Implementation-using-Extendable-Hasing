@@ -5,17 +5,6 @@
 #include "../include/bf.h"
 #include "../include/hash_file.h"
 
-
-
-#define CALL_BF(call)       \
-{                           \
-  BF_ErrorCode code = call; \
-  if (code != BF_OK) {      \
-    BF_PrintError(code);    \
-    return HT_ERROR;        \
-  }                         \
-}
-
 HT_ErrorCode
 SplitThePointers(int *pointersArray, int destinationBlock, int global_depth, int fileDesc, BF_Block *blockToWrite);
 

@@ -32,6 +32,16 @@ typedef struct UpdateRecordArray{
 }
 UpdateRecordArray;
 
+#define CALL_BF(call)       \
+{                           \
+  BF_ErrorCode code = call; \
+  if (code != BF_OK) {      \
+    BF_PrintError(code);    \
+    return HT_ERROR;        \
+  }                         \
+}
+
+
 #define CALL_OR_DIE(call)     \
   {                           \
     HT_ErrorCode code = call; \

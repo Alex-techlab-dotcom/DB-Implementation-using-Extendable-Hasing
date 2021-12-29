@@ -1,45 +1,14 @@
-#ifndef HASH_FILE_H
-#define HASH_FILE_H
+#ifndef SHT_FILE_H
+#define SHT_FILE_H
 
 #include "hash_file.h"
-
-#define MAX_OPEN_SHT_FILES 20
-
-typedef enum HT_ErrorCode {
-  HT_OK,
-  HT_ERROR
-} HT_ErrorCode;
-
-typedef struct Record {
-	int id;
-	char name[15];
-	char surname[20];
-	char city[20];
-} Record;
 
 typedef struct{
 char index_key[20];
 int tupleId;  /*Ακέραιος που προσδιορίζει το block και τη θέση μέσα στο block στην οποία     έγινε η εισαγωγή της εγγραφής στο πρωτεύον ευρετήριο.*/
 }SecondaryRecord;
 
-typedef struct UpdateRecordNode{
-    Record* recordPointer;
-    int new_tupleid;
-    int old_tupleid;
-}UpdateRecordNode;
-
-typedef struct UpdateRecordArray{
-    UpdateRecordNode array[8];
-    char hasResults;
-}
-        UpdateRecordArray;
-
-typedef struct SHFcell{
-    int BFid;
-    char* FileName;
-}SHFcell;
-
-SHFcell OpenSHTFiles[MAX_OPEN_SHT_FILES];
+HFcell OpenSHTFiles[MAX_OPEN_FILES];
 
 HT_ErrorCode SHT_Init();
 

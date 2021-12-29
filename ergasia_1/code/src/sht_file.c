@@ -1,41 +1,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "../include/bf.h"
 #include "sht_file.h"
 
-#define CALL_BF(call)       \
-{                           \
-  BF_ErrorCode code = call; \
-  if (code != BF_OK) {         \
-    BF_PrintError(code);    \
-    return HP_ERROR;        \
-  }                         \
-}
+HT_ErrorCode
+SplitThePointers(int *pointersArray, int destinationBlock, int global_depth, int fileDesc, BF_Block *blockToWrite);
 
-#ifndef HASH_FILE_H
-#define HASH_FILE_H
+HT_ErrorCode CopyBlocksToArray(int *arrayOfPointers, int fileDesc, int global_depth, int offset);
 
+HT_ErrorCode CopyArrayToBlocks(int *arrayOfPointers, int global_depth, int fileDesc, int offset);
 
-typedef enum HT_ErrorCode {
-  HT_OK,
-  HT_ERROR
-} HT_ErrorCode;
-
-typedef struct Record {
-	int id;
-	char name[15];
-	char surname[20];
-	char city[20];
-} Record;
-
-typedef struct{
-char index-key[20];
-int tupleId;  /*Ακέραιος που προσδιορίζει το block και τη θέση μέσα στο block στην οποία     έγινε η εισαγωγή της εγγραφής στο πρωτεύον ευρετήριο.*/ 
-}SecondaryRecord;
-
-
+HT_ErrorCode Resize(int indexDesc, int destinationBlock, BF_Block *blockToWrite, int offset);
 
 HT_ErrorCode SHT_Init() {
   //insert code here
@@ -119,13 +97,13 @@ HT_ErrorCode SHT_OpenSecondaryIndex(const char *sfileName, int *indexDesc  ) {
     for ( int i = 0; i < MAX_OPEN_FILES; ++i ) {
         if ( strcmp(OpenHashFiles[i].FileName, primaryHFname)==0 ) {
             *indexDesc = i;
-            OpenSHTFiles[i].Filename = malloc(strlen(sfileName)+1);
+            OpenSHTFiles[i].FileName = malloc(strlen(sfileName)+1);
             strcpy(OpenSHTFiles[i].FileName, sfileName);
             OpenSHTFiles[i].BFid=shID;
             return HT_OK;
         }
     }
-    printf("NO SPACE AVAILABLE FOR HASHFILE :%s\n", fileName);
+    printf("NO SPACE AVAILABLE FOR HASHFILE :%s\n", sfileName);
     return HT_ERROR;
 }
 
@@ -225,11 +203,6 @@ HT_ErrorCode SHT_SecondaryInsertEntry (int indexDesc,SecondaryRecord record  ) {
          */
         memcpy(blockToWritePointer + 2 * sizeof(int) + (numOfEntries - 1) * sizeof(SecondaryRecord), &record, sizeof(SecondaryRecord));
 
-        *tupleId = ((destinationBlock + 1) * (BF_BLOCK_SIZE - 2 * sizeof(int)) / sizeof(SecondaryRecord)) + numOfEntries;
-        //updateArray = NULL; // IT SIGNALS THAT NO SPLIT WAS NEEDED
-
-        updateArray->hasResults=0;
-
         BF_Block_SetDirty(blockToWrite);
         CALL_BF(BF_UnpinBlock(blockToWrite));
 
@@ -256,13 +229,11 @@ HT_ErrorCode SHT_SecondaryInsertEntry (int indexDesc,SecondaryRecord record  ) {
         memcpy(&global_depth, firstBlockData + strlen("SHT") + 1, sizeof(int));
 
         /*we reinsert the records of the overflow-block*/
-        updateArray->hasResults=1;
         SecondaryRecord *recordArray[recs+1];
         for ( int i = 0; i < recs; ++i ) {
             recordArray[i] = malloc(sizeof(SecondaryRecord));
             memcpy(recordArray[i], blockToWritePointer + 2 * sizeof(int) + i * sizeof(SecondaryRecord), sizeof(SecondaryRecord));
             // updateArray[i]->recordPointer = malloc(sizeof(Record));
-            updateArray->array[i].recordPointer=recordArray[i];
         }
         //recordArray[8] = malloc(sizeof(Record));
         recordArray[recs] = &record;
@@ -277,7 +248,9 @@ HT_ErrorCode SHT_SecondaryInsertEntry (int indexDesc,SecondaryRecord record  ) {
         BF_Block_SetDirty(blockToWrite);
         BF_UnpinBlock(blockToWrite);
         for ( int i = 0; i < recs+1; ++i ) {
-            rec_id = recordArray[i]->id;
+            for (int j = 0; i < strlen(recordArray[i]->index_key); i++) {
+                rec_id+=recordArray[i]->index_key[j];
+            }
             //printf("recId %d\n",rec_id);
             block_index = 0;
             //we retrieve the first global depth bits
@@ -340,7 +313,7 @@ HT_ErrorCode SHT_SecondaryInsertEntry (int indexDesc,SecondaryRecord record  ) {
 }
 
 HT_ErrorCode Resize(int indexDesc, int destinationBlock, BF_Block *blockToWrite, int offset) {
-    int fileDesc = OpenSHTFashFiles[indexDesc].BFid;
+    int fileDesc = OpenSHTFiles[indexDesc].BFid;
     char *firstBlockData, *secondBlockData, *blockData;
     int numOfEntries;
     BF_Block *firstBlock, *secondBlock, *blockPtr;
@@ -454,7 +427,7 @@ HT_ErrorCode Resize(int indexDesc, int destinationBlock, BF_Block *blockToWrite,
 
 }
 
-SplitThePointers(int *pointersArray, int destinationBlock, int global_depth, int fileDesc, BF_Block *blockToWrite) {
+HT_ErrorCode SplitThePointers(int *pointersArray, int destinationBlock, int global_depth, int fileDesc, BF_Block *blockToWrite) {
 
 
     char *blockToWritePointer = BF_Block_GetData(blockToWrite);
@@ -617,10 +590,9 @@ HT_ErrorCode SHT_SecondaryUpdateEntry (int indexDesc, UpdateRecordArray *updateA
 
 
     for(int j=0; j<=7; j++) {
-        if(updateArrayughvgujihgbvujhgv)
         //hash function
         int rec_id = 0;/*to be decided ;) */;
-        for ( int i = 0; i < strlen(record.index_key); i++ ) {
+        for ( int i = 0; i < strlen(updateArray); i++ ) {
             rec_id += record.index_key[i];
         }
         int block_index = 0;
@@ -672,7 +644,7 @@ HT_ErrorCode SHT_SecondaryUpdateEntry (int indexDesc, UpdateRecordArray *updateA
   return HT_OK;
 }
 
-HT_ErrorCode SHT_PrintAllEntries(int sindexDesc, char *index-key ) {
+HT_ErrorCode SHT_PrintAllEntries(int sindexDesc, char *index_key ) {
   //insert code here
   return HT_OK;
 }
@@ -682,10 +654,7 @@ HT_ErrorCode SHT_HashStatistics(char *filename ) {
   return HT_OK;
 }
 
-HT_ErrorCode SHT_InnerJoin(int sindexDesc1, int sindexDesc2,  char *index-key ) {
+HT_ErrorCode SHT_InnerJoin(int sindexDesc1, int sindexDesc2,  char *index_key ) {
   //insert code here
   return HT_OK;
 }
-
-
-#endif // HASH_FILE_H
