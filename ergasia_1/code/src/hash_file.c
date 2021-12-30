@@ -163,6 +163,7 @@ HT_ErrorCode HT_InsertEntry(int indexDesc, Record record, int *tupleId, UpdateRe
     /* first we check how many entries have already took place */
     memcpy(&numOfEntries, blockToWritePointer + sizeof(int), sizeof(int));
     BF_UnpinBlock(hashBlock);
+    int c = (BF_BLOCK_SIZE - 2 * sizeof(int)) / sizeof(Record);
     if ( numOfEntries < (BF_BLOCK_SIZE - 2 * sizeof(int)) / sizeof(Record)) {
 
         /* There is enough space so we make one more insertion*/
@@ -176,10 +177,12 @@ HT_ErrorCode HT_InsertEntry(int indexDesc, Record record, int *tupleId, UpdateRe
          */
         memcpy(blockToWritePointer + 2 * sizeof(int) + (numOfEntries - 1) * sizeof(Record), &record, sizeof(Record));
 
-        *tupleId = ((destinationBlock + 1) * (BF_BLOCK_SIZE - 2 * sizeof(int)) / sizeof(Record)) + numOfEntries;
+
+        *tupleId = (destinationBlock + 1) * c + numOfEntries;
+        // *tupleId= ((destinationBlock + 1) * (BF_BLOCK_SIZE - 2 * sizeof(int)) / sizeof(Record)) + numOfEntries;
         //updateArray = NULL; // IT SIGNALS THAT NO SPLIT WAS NEEDED
 
-        updateArray->hasResults=0;
+        updateArray->hasResults = 0;
 
         BF_Block_SetDirty(blockToWrite);
         CALL_BF(BF_UnpinBlock(blockToWrite));
@@ -207,14 +210,14 @@ HT_ErrorCode HT_InsertEntry(int indexDesc, Record record, int *tupleId, UpdateRe
         memcpy(&global_depth, firstBlockData + strlen("HF") + 1, sizeof(int));
 
         /*we reinsert the records of the overflow-block*/
-        updateArray->hasResults=1;
+        updateArray->hasResults = 1;
         Record *recordArray[9];
         for ( int i = 0; i < 8; ++i ) {
             recordArray[i] = malloc(sizeof(Record));
             memcpy(recordArray[i], blockToWritePointer + 2 * sizeof(int) + i * sizeof(Record), sizeof(Record));
-           // updateArray[i]->recordPointer = malloc(sizeof(Record));
-            updateArray->array[i].recordPointer=recordArray[i];
-            updateArray->array[i].old_tupleid=((destinationBlock + 1) * (BF_BLOCK_SIZE - 2 * sizeof(int)) / sizeof(Record)) + i+1;
+            // updateArray[i]->recordPointer = malloc(sizeof(Record));
+            updateArray->array[i].recordPointer = recordArray[i];
+            updateArray->array[i].old_tupleid = (destinationBlock + 1) * c + i + 1;
         }
         //recordArray[8] = malloc(sizeof(Record));
         recordArray[8] = &record;
@@ -268,9 +271,9 @@ HT_ErrorCode HT_InsertEntry(int indexDesc, Record record, int *tupleId, UpdateRe
 
             memcpy(newBlockToWritePointer + sizeof(int), &numOfEntries, sizeof(int));
 
-            *tupleId = ((newDestinationBlock + 1) * (BF_BLOCK_SIZE - 2 * sizeof(int)) / sizeof(Record)) + numOfEntries;
+            *tupleId = (newDestinationBlock + 1) * c + numOfEntries;
             if ( i != 8 ) {
-                updateArray->array[i].new_tupleid=(*tupleId);
+                updateArray->array[i].new_tupleid = (*tupleId);
             }
 
             BF_Block_SetDirty(newBlockToWrite);
@@ -282,7 +285,7 @@ HT_ErrorCode HT_InsertEntry(int indexDesc, Record record, int *tupleId, UpdateRe
         BF_Block_Destroy(&newBlockToWrite);
         BF_Block_Destroy(&hashBlock);
 
-        for ( int i = 0; i <8 ; ++i ) {
+        for ( int i = 0; i < 8; ++i ) {
             free(recordArray[i]);
         }
     }

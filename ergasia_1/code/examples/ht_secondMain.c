@@ -60,11 +60,8 @@ int main() {
 
     CALL_OR_DIE(HT_Init());
     int indexDesc;
-    int indexDesc2;
     CALL_OR_DIE(HT_CreateIndex(FILE_NAME, GLOBAL_DEPT));// creates a HashFile:"data.db" and gives GlobalDept=2 for the hashmap
     CALL_OR_DIE(HT_OpenIndex(FILE_NAME, &indexDesc)); //it opens "data.db" and it returns its index( lets say it is index 10 ) to the HashFiles Array[20]
-
-
     Record record;
    // printf("indexDesc %d\n",indexDesc);
 
@@ -72,7 +69,7 @@ int main() {
     int r;
     printf("Insert Entries\n");
     // Insertion of 1000 entries!
-    int numOfEntries=50000;
+    int numOfEntries=100;
     UpdateRecordArray array;
     int tupleId;
     for (int id = 0; id < numOfEntries; ++id) {
@@ -91,11 +88,9 @@ int main() {
     }
     HT_PrintAllEntries(indexDesc,NULL);
     CALL_OR_DIE(HT_CloseFile(indexDesc));
-
     CALL_OR_DIE(HT_OpenIndex(FILE_NAME, &indexDesc)); //it opens "data.db" and it returns its index( lets say it is index 10 ) to the HashFiles Array[20]
     CALL_OR_DIE(HashStatistics(FILE_NAME));
     CALL_OR_DIE(HT_CloseFile(indexDesc));
-
     BF_Close();
 
 }
