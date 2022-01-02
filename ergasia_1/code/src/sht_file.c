@@ -790,7 +790,77 @@ HT_ErrorCode SHT_PrintAllEntries(int sindexDesc, char *index_key) {
 }
 
 HT_ErrorCode SHT_HashStatistics(char *filename) {
-    //insert code here
+    int fileDesc, flag = 0;
+
+    for ( int i = 0; i < MAX_OPEN_FILES; i++ ) {
+        if ( OpenSHTFiles[i].FileName != NULL && strcmp(filename, OpenSHTFiles[i].FileName) == 0 ) {
+            fileDesc = OpenSHTFiles[i].BFid;
+            flag = 1;
+            break;
+        }
+    }
+    if ( flag == 0 ) {
+        printf("Filename does not exist in the table.\n");
+        return HT_ERROR;
+    }
+
+    BF_Block *firstBlock;
+    BF_Block_Init(&firstBlock);
+    CALL_BF(BF_GetBlock(fileDesc, 0, firstBlock));
+    char *firstBlockData = BF_Block_GetData(firstBlock);
+    int global_depth;
+    memcpy(&global_depth, firstBlockData + strlen("SHT") + 1, sizeof(int));
+    int iterations = (int) pow(2, global_depth) / (BF_BLOCK_SIZE / 4);
+
+    int filename_len, attr_len;
+    memcpy(&filename_len, firstBlockData + strlen("SHT") + 1 + sizeof(int), sizeof(int));
+    memcpy(&attr_len, firstBlockData + strlen("SHT") + 1 + 2 * sizeof(int) + filename_len, sizeof(int));
+    int offset = strlen("SHT") + 1 + 3 * sizeof(int) + filename_len + attr_len;
+
+    if ( iterations == 0 )iterations++;
+    int hashBlocksArray[iterations];
+    for ( int j = 0; j < iterations; ++j ) {
+        int hashblockID;
+        memcpy(&hashblockID, firstBlockData + offset + j * sizeof(int), sizeof(int));
+        hashBlocksArray[j] = hashblockID;
+    }
+    CALL_BF(BF_UnpinBlock(firstBlock));
+    int uniqueBlocks;
+    CALL_BF(BF_GetBlockCounter(fileDesc, &uniqueBlocks));
+    BF_Block *blockPtr;
+    BF_Block_Init(&blockPtr);
+    char *blockPtrData;
+    int counter = 0;
+
+    int min = -1, max = -1, total_records = 0;
+    double mid;
+
+    for ( int i = 1; i < uniqueBlocks; ++i ) {
+        if ( i == hashBlocksArray[counter] ) {
+            if ( counter + 1 < iterations ) {
+                counter++;
+            }
+
+            continue;
+        }
+        CALL_BF(BF_GetBlock(fileDesc, i, blockPtr));
+        blockPtrData = BF_Block_GetData(blockPtr);
+        int entries;
+        memcpy(&entries, blockPtrData + sizeof(int), sizeof(int));
+        total_records += entries;
+        if ( min > entries || min == -1 )min = entries;
+        if ( max < entries )max = entries;
+        CALL_BF(BF_UnpinBlock(blockPtr));
+    }
+    mid = 1.0 * total_records / (uniqueBlocks - iterations - 1);
+
+    printf("SECONDARY HASH STATISTICS RESULTS FOR FILE %s:\n", filename);
+    printf("Secondary hash file has %d total blocks, %d hash blocks, %d bucket blocks.\n", uniqueBlocks, iterations,
+           uniqueBlocks - iterations - 1);
+    printf("The minimum entries that appear in a bucket are %d.\n", min);
+    printf("The maximum entries that appear in a bucket are %d.\n", max);
+    printf("The mean number of entries that appear in a bucket are %.3f .\n", mid);
+
     return HT_OK;
 }
 

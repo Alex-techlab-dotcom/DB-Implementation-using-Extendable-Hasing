@@ -109,6 +109,7 @@ const char* cities[] = {
         HT_PrintAllEntries(indexDesc,NULL);
         SHT_PRINTALL(SHTindex);
         SHT_PrintAllEntries(SHTindex,"Michas");
+        SHT_HashStatistics("shtdata.db");
         SHT_CloseSecondaryIndex(SHTindex);
         CALL_OR_DIE(HT_CloseFile(indexDesc));
 
