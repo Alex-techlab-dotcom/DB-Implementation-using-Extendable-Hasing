@@ -108,10 +108,15 @@ const char* cities[] = {
         }
         HT_PrintAllEntries(indexDesc,NULL);
         SHT_PRINTALL(SHTindex);
-        SHT_PrintAllEntries(SHTindex,"Michas");
+       // SHT_PrintAllEntries(SHTindex,"Michas");
         SHT_HashStatistics("shtdata.db");
-        SHT_CloseSecondaryIndex(SHTindex);
+
+        CALL_OR_DIE(SHT_CloseSecondaryIndex(SHTindex));
+
+        printf("sht %d and indexDEsc %d\n",SHTindex,indexDesc);
+
         CALL_OR_DIE(HT_CloseFile(indexDesc));
+
 
         CALL_OR_DIE(HT_OpenIndex(FILE_NAME, &indexDesc)); //it opens "data.db" and it returns its index( lets say it is index 10 ) to the HashFiles Array[20]
         CALL_OR_DIE(HashStatistics(FILE_NAME));
@@ -119,5 +124,4 @@ const char* cities[] = {
 
         BF_Close();
         printf("%lu\n", sizeof(SecondaryRecord));
-
     }

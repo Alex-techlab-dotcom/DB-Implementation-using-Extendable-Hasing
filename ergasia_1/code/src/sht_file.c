@@ -296,14 +296,14 @@ HT_ErrorCode SHT_SecondaryInsertEntry(int indexDesc, SecondaryRecord record) {
                 printf("entries %d\n",numOfEntries);
                 printf("blockid %d\n",newDestinationBlock);
                 printf("THERE IS NO MORE SPACE IN THIS BLOCK\n");
-                memcpy(newBlockToWritePointer + 2 * sizeof(int) + (numOfEntries - 1) * sizeof(SecondaryRecord),
+            /*    memcpy(newBlockToWritePointer + 2 * sizeof(int) + (numOfEntries - 1) * sizeof(SecondaryRecord),
                        recordArray[i],
                        sizeof(SecondaryRecord));
 
                 memcpy(newBlockToWritePointer + sizeof(int), &numOfEntries, sizeof(int));
                 SHT_PRINTALL(indexDesc);
                 printf("%lu\n", sizeof(SecondaryRecord));
-                return HT_ERROR;
+                return HT_ERROR;*/
             }
             memcpy(newBlockToWritePointer + 2 * sizeof(int) + (numOfEntries - 1) * sizeof(SecondaryRecord),
                    recordArray[i],
