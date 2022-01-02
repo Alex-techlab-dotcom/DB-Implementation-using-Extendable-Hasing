@@ -36,7 +36,17 @@ const char* surnames[] = {
         "Oikonomou",
         "Mailis",
         "Michas",
-        "Halatsis"
+        "Halatsis",
+        "tsarli",
+        "tieto",
+        "Trlito",
+        "tSarto",
+        "tsArolito",
+        "tsaRlo",
+        "tsLio",
+        "ts",
+        "lito",
+        "rlito",
 };
 
 const char* cities[] = {
@@ -77,7 +87,8 @@ const char* cities[] = {
         Record record;
         // printf("indexDesc %d\n",indexDesc);
 
-        srand(12569874);
+       // srand(12569874);
+        srand(time(NULL));
         int r;
         printf("Insert Entries\n");
         // Insertion of 1000 entries!
@@ -90,7 +101,7 @@ const char* cities[] = {
             // printf("record.id=%d\n",record.id);
             r = rand() % 12;
             memcpy(record.name, names[r], strlen(names[r]) + 1);
-            r = rand() % 12;
+            r = rand() % 21;
             memcpy(record.surname, surnames[r], strlen(surnames[r]) + 1);
             r = rand() % 10;
             memcpy(record.city, cities[r], strlen(cities[r]) + 1);
@@ -112,8 +123,6 @@ const char* cities[] = {
         SHT_HashStatistics("shtdata.db");
 
         CALL_OR_DIE(SHT_CloseSecondaryIndex(SHTindex));
-
-        printf("sht %d and indexDEsc %d\n",SHTindex,indexDesc);
 
         CALL_OR_DIE(HT_CloseFile(indexDesc));
 

@@ -214,7 +214,7 @@ HT_ErrorCode SHT_SecondaryInsertEntry(int indexDesc, SecondaryRecord record) {
         //blockToWrite is the block that has already 8 entries
         int local_depth;
         memcpy(&local_depth, blockToWritePointer, sizeof(int));
-    //    printf("DESTIONBLOCK %d HAS OVERFLOW\n",destinationBlock);
+        //    printf("DESTIONBLOCK %d HAS OVERFLOW\n",destinationBlock);
 
         if ( local_depth == global_depth ) {
             printf("resize and split\n");
@@ -253,9 +253,9 @@ HT_ErrorCode SHT_SecondaryInsertEntry(int indexDesc, SecondaryRecord record) {
         BF_UnpinBlock(blockToWrite);
         //printf("recs are %d\n",recs);
         for ( int i = 0; i < recs + 1; ++i ) {
-            rec_id=0;
-           // printf("surname is : %s\n",recordArray[i]->index_key);
-           // printf("id %d\n",recordArray[i]->tupleId);
+            rec_id = 0;
+            // printf("surname is : %s\n",recordArray[i]->index_key);
+            // printf("id %d\n",recordArray[i]->tupleId);
             for ( int j = 0; j < strlen(recordArray[i]->index_key); j++ ) {
                 rec_id += recordArray[i]->index_key[j];
             }
@@ -282,8 +282,8 @@ HT_ErrorCode SHT_SecondaryInsertEntry(int indexDesc, SecondaryRecord record) {
             hashBlockData = BF_Block_GetData(hashBlock);
             memcpy(&newDestinationBlock, hashBlockData + (block_index % (BF_BLOCK_SIZE / sizeof(int))) * sizeof(int),
                    sizeof(int));
-         //   printf("BLOCKINDEX %d\n",block_index);
-          //  printf("DESTIONBLIOCK ID : %d\n",newDestinationBlock);
+            //   printf("BLOCKINDEX %d\n",block_index);
+            //  printf("DESTIONBLIOCK ID : %d\n",newDestinationBlock);
             CALL_BF(BF_GetBlock(fileDesc, newDestinationBlock, newBlockToWrite));
 
             /*insertion of data*/
@@ -293,17 +293,17 @@ HT_ErrorCode SHT_SecondaryInsertEntry(int indexDesc, SecondaryRecord record) {
             numOfEntries++;
             //printf("entries are : %d\n",numOfEntries);
             if ( numOfEntries > recs ) {
-                printf("entries %d\n",numOfEntries);
-                printf("blockid %d\n",newDestinationBlock);
+                printf("entries %d\n", numOfEntries);
+                printf("blockid %d\n", newDestinationBlock);
                 printf("THERE IS NO MORE SPACE IN THIS BLOCK\n");
-            /*    memcpy(newBlockToWritePointer + 2 * sizeof(int) + (numOfEntries - 1) * sizeof(SecondaryRecord),
-                       recordArray[i],
-                       sizeof(SecondaryRecord));
+                /*    memcpy(newBlockToWritePointer + 2 * sizeof(int) + (numOfEntries - 1) * sizeof(SecondaryRecord),
+                           recordArray[i],
+                           sizeof(SecondaryRecord));
 
-                memcpy(newBlockToWritePointer + sizeof(int), &numOfEntries, sizeof(int));
-                SHT_PRINTALL(indexDesc);
-                printf("%lu\n", sizeof(SecondaryRecord));
-                return HT_ERROR;*/
+                    memcpy(newBlockToWritePointer + sizeof(int), &numOfEntries, sizeof(int));
+                    SHT_PRINTALL(indexDesc);
+                    printf("%lu\n", sizeof(SecondaryRecord));
+                    */return HT_ERROR;
             }
             memcpy(newBlockToWritePointer + 2 * sizeof(int) + (numOfEntries - 1) * sizeof(SecondaryRecord),
                    recordArray[i],
@@ -383,7 +383,7 @@ HT_ErrorCode SHTResize(int indexDesc, int destinationBlock, BF_Block *blockToWri
         CALL_BF(BF_UnpinBlock(firstBlock));
         CALL_BF(BF_UnpinBlock(secondBlock));
         BF_Block_Destroy(&secondBlock);
-        //BF_Block_Destroy(&firstBlock);
+        BF_Block_Destroy(&firstBlock);
         BF_Block_Destroy(&blockPtr);
         return HT_OK;
     } else {
@@ -447,7 +447,6 @@ HT_ErrorCode SHTResize(int indexDesc, int destinationBlock, BF_Block *blockToWri
     CALL_BF(BF_UnpinBlock(secondBlock));
     BF_Block_Destroy(&secondBlock);
     BF_Block_Destroy(&firstBlock);
-    // BF_Block_Destroy(&firstBlock);
     free(PointersArray);
     return HT_OK;
 
@@ -465,7 +464,7 @@ SHTSplitThePointers(int *pointersArray, int destinationBlock, int global_depth, 
     CALL_BF(BF_GetBlockCounter(fileDesc, &lastBlock));
     char *newBlockData = BF_Block_GetData(newBlock);
     lastBlock--;
-    printf("THE NEW BLOCK ID IS %d\n",lastBlock);
+    printf("THE NEW BLOCK ID IS %d\n", lastBlock);
     int newLocalDepth;
     // we retrieve the local depth from the the block with the 8 entries
     memcpy(&newLocalDepth, blockToWritePointer, sizeof(int));
@@ -697,16 +696,16 @@ HT_ErrorCode SHT_SecondaryUpdateEntry(int indexDesc, UpdateRecordArray *updateAr
 
 HT_ErrorCode SHT_PrintAllEntries(int sindexDesc, char *index_key) {
     printf("SHT_PrintAllEntries\n");
-    printf("index key is %s\n",index_key);
+    printf("index key is %s\n", index_key);
     int fileDescSHT = OpenSHTFiles[sindexDesc].BFid;
-    int fileDescHT= OpenHashFiles[sindexDesc].BFid;
-    BF_Block * firstBlock;
+    int fileDescHT = OpenHashFiles[sindexDesc].BFid;
+    BF_Block *firstBlock;
     BF_Block_Init(&firstBlock);
-    BF_GetBlock(fileDescSHT,0,firstBlock);
-    char * firstBlockData= BF_Block_GetData(firstBlock);
+    BF_GetBlock(fileDescSHT, 0, firstBlock);
+    char *firstBlockData = BF_Block_GetData(firstBlock);
 
     int global_depth;
-    memcpy(&global_depth,firstBlockData+ strlen("SHT")+1,sizeof(int));
+    memcpy(&global_depth, firstBlockData + strlen("SHT") + 1, sizeof(int));
 
     int filename_len, attr_len;
     memcpy(&filename_len, firstBlockData + strlen("SHT") + 1 + sizeof(int), sizeof(int));
@@ -754,32 +753,32 @@ HT_ErrorCode SHT_PrintAllEntries(int sindexDesc, char *index_key) {
     /* first we check how many entries have already took place */
     int numOfEntries;
     memcpy(&numOfEntries, blockToWritePointer + sizeof(int), sizeof(int));
-    printf("destionblock %d\n",destinationBlock);
-    printf("entries are %d\n",numOfEntries);
+    printf("destionblock %d\n", destinationBlock);
+    printf("entries are %d\n", numOfEntries);
     for ( int i = 0; i < numOfEntries; ++i ) {
         SecondaryRecord srecord;
         memcpy(&srecord, blockToWritePointer + 2 * sizeof(int) + i * sizeof(SecondaryRecord),
                sizeof(SecondaryRecord));
-       // printf("surname of record is :%s\n",srecord.index_key);
-            if ( strcmp(srecord.index_key, index_key)==0) {
+        // printf("surname of record is :%s\n",srecord.index_key);
+        if ( strcmp(srecord.index_key, index_key) == 0 ) {
 
-                printf("we find it\n");
-                //tupleid=((blockId+1)*8)+indec_of_rec_in_block
-                int blockId=srecord.tupleId/8-1;
-                int placeInBlock=srecord.tupleId%8;
-                BF_Block * block;
-                BF_Block_Init(&block);
-                BF_GetBlock(fileDescHT,blockId,block);
-                char * blockData= BF_Block_GetData(block);
-                Record recordToPrint;
-                memcpy(&recordToPrint,blockData + 2 * sizeof(int) + (placeInBlock-1) * sizeof(Record),
-                       sizeof(Record));
-                printf("Bucket Number: %d || ID: %d || Name: %s || Surname: %s || City: %s\n",
-                       blockId, recordToPrint.id, recordToPrint.name,
-                       recordToPrint.surname, recordToPrint.city);
-                BF_UnpinBlock(block);
-                BF_Block_Destroy(&block);
-            }
+            printf("we find it\n");
+            //tupleid=((blockId+1)*8)+indec_of_rec_in_block
+            int blockId = srecord.tupleId / 8 - 1;
+            int placeInBlock = srecord.tupleId % 8;
+            BF_Block *block;
+            BF_Block_Init(&block);
+            BF_GetBlock(fileDescSHT, blockId, block);
+            char *blockData = BF_Block_GetData(block);
+            Record recordToPrint;
+            memcpy(&recordToPrint, blockData + 2 * sizeof(int) + (placeInBlock - 1) * sizeof(Record),
+                   sizeof(Record));
+            printf("Bucket Number: %d || ID: %d || Name: %s || Surname: %s || City: %s\n",
+                   blockId, recordToPrint.id, recordToPrint.name,
+                   recordToPrint.surname, recordToPrint.city);
+            BF_UnpinBlock(block);
+            BF_Block_Destroy(&block);
+        }
 
     }
     BF_UnpinBlock(blockToWrite);
@@ -866,30 +865,238 @@ HT_ErrorCode SHT_HashStatistics(char *filename) {
 
 HT_ErrorCode SHT_InnerJoin(int sindexDesc1, int sindexDesc2, char *index_key) {
     //insert code here
+    int fileDesc1 = OpenSHTFiles[sindexDesc1].BFid;
+    int fileDesc2 = OpenSHTFiles[sindexDesc2].BFid;
+
+    BF_Block *firstBlock;
+    BF_Block_Init(&firstBlock);
+    CALL_BF(BF_GetBlock(fileDesc1, 0, firstBlock));
+    char *firstBlockData = BF_Block_GetData(firstBlock);
+    int global_depth;
+    memcpy(&global_depth, firstBlockData + strlen("SHT") + 1, sizeof(int));
+    int iterations1 = (int) pow(2, global_depth) / (BF_BLOCK_SIZE / 4);
+
+    //offset to the first hashblock;
+    int filename_len, attr_len;
+    memcpy(&filename_len, firstBlockData + strlen("SHT") + 1 + sizeof(int), sizeof(int));
+    memcpy(&attr_len, firstBlockData + strlen("SHT") + 1 + 2 * sizeof(int) + filename_len, sizeof(int));
+    int offset1 = strlen("SHT") + 1 + 3 * sizeof(int) + filename_len + attr_len;
+
+    char * attr_type1= malloc(attr_len);
+    attr_type1=memcpy(&attr_type1, firstBlockData+strlen("SHT") + 1 + 3 * sizeof(int) + filename_len, attr_len);
+
+
+    int uniqueBlocks1;
+    CALL_BF(BF_GetBlockCounter(fileDesc1, &uniqueBlocks1));
+
+    if ( iterations1 == 0 )iterations1++;
+    int dataBlockArray1[uniqueBlocks1 - iterations1];
+    int hashBlocksArray1[iterations1];
+    for ( int j = 0; j < iterations1; ++j ) {
+        int hashblockID;
+        memcpy(&hashblockID, firstBlockData + offset1 + j * sizeof(int), sizeof(int));
+        hashBlocksArray1[j] = hashblockID;
+    }
+
+    int counter = 0;
+    int datablocksCounter1 = 0;
+    for ( int i = 1; i < uniqueBlocks1; i++ ) {
+        if ( i == hashBlocksArray1[counter] ) {
+            if ( counter + 1 < iterations1 )
+                counter++;
+            continue;
+        } else {
+            dataBlockArray1[datablocksCounter1] = i;
+            if ((uniqueBlocks1 - iterations1) > datablocksCounter1 )datablocksCounter1++;
+        }
+    }
+
+    // second SHTFILE
+    int uniqueBlocks2;
+    CALL_BF(BF_GetBlockCounter(fileDesc2, &uniqueBlocks2));
+
+    BF_Block * firstBlock2;
+    BF_Block_Init(&firstBlock2);
+    CALL_BF(BF_GetBlock(fileDesc2, 0, firstBlock2));
+    char * firstBlockData2 = BF_Block_GetData(firstBlock2);
+    int global_depth2;
+    memcpy(&global_depth2, firstBlockData2 + strlen("SHT") + 1, sizeof(int));
+    int iterations2 = (int) pow(2, global_depth2) / (BF_BLOCK_SIZE / 4);
+
+    memcpy(&filename_len, firstBlockData2 + strlen("SHT") + 1 + sizeof(int), sizeof(int));
+    memcpy(&attr_len, firstBlockData2 + strlen("SHT") + 1 + 2 * sizeof(int) + filename_len, sizeof(int));
+    int offset2 = strlen("SHT") + 1 + 3 * sizeof(int) + filename_len + attr_len;
+
+    char * attr_type2= malloc(attr_len);
+    attr_type2=memcpy(&attr_type2, firstBlockData2+strlen("SHT") + 1 + 3 * sizeof(int) + filename_len, attr_len);
+
+    if( strcmp(attr_type1, attr_type2)){
+        BF_UnpinBlock(firstBlock);
+        BF_Block_Destroy(&firstBlock);
+        BF_UnpinBlock(firstBlock2);
+        BF_Block_Destroy(&firstBlock2);
+        free(attr_type1);
+        free(attr_type2);
+        printf("Secondary hash tables have different attribute types.\n");
+        return HT_ERROR;
+    }
+
+    if ( iterations2 == 0 )iterations2++;
+    int dataBlockArray2[uniqueBlocks2 - iterations2];
+    int hashBlocksArray2[iterations2];
+    for ( int j = 0; j < iterations2; ++j ) {
+        int hashblockID;
+        memcpy(&hashblockID, firstBlockData2 + offset2 + j * sizeof(int), sizeof(int));
+        hashBlocksArray2[j] = hashblockID;
+    }
+
+
+    int counter2 = 0;
+    int datablocksCounter2 = 0;
+    for ( int i = 1; i < uniqueBlocks2; i++ ) {
+        if ( i == hashBlocksArray2[counter2] ) {
+            if ( counter2 + 1 < iterations2 )
+                counter2++;
+            continue;
+        } else {
+            dataBlockArray2[datablocksCounter2] = i;
+            if ((uniqueBlocks2 - iterations2) > datablocksCounter2 )datablocksCounter2++;
+        }
+    }
+
+
+    //inner join
+    if(index_key==NULL){
+        for ( int i = 0; i < datablocksCounter1; ++i ) {
+            BF_Block *br;
+            BF_Block_Init(&br);
+            CALL_BF(BF_GetBlock(fileDesc1, dataBlockArray1[i], br));
+            char *brData = BF_Block_GetData(br);
+            int entries1;
+            memcpy(&entries1, brData + sizeof(int), sizeof(int));
+            for ( int j = 0; j < entries1; ++j ) {
+                SecondaryRecord recordFromBr;
+                memcpy(&recordFromBr, brData + 2 * sizeof(int) + j * sizeof(SecondaryRecord), sizeof(SecondaryRecord));
+                for ( int k = 0; k < datablocksCounter2; ++k ) {
+                    BF_Block *bs;
+                    BF_Block_Init(&bs);
+                    CALL_BF(BF_GetBlock(fileDesc2, dataBlockArray2[k], bs));
+                    char *bsData = BF_Block_GetData(bs);
+                    int entries2;
+                    memcpy(&entries2, bsData + sizeof(int), sizeof(int));
+                    for ( int l = 0; l < entries2; ++l ) {
+                        SecondaryRecord recordFromBs;
+                        memcpy(&recordFromBs, bsData + 2 * sizeof(int) + l * sizeof(SecondaryRecord),
+                               sizeof(SecondaryRecord));
+                        if ( strcmp(recordFromBr.index_key, recordFromBs.index_key)) {
+                            printf("Index Key: %s    TupleID from file 1: %d    TupleID from file 2: %d \n",
+                                   recordFromBr.index_key, recordFromBr.tupleId, recordFromBs.tupleId);
+                        }
+                    }
+                    BF_UnpinBlock(bs);
+                    BF_Block_Destroy(&bs);
+                }
+            }
+            BF_UnpinBlock(br);
+            BF_Block_Destroy(&br);
+        }
+    }
+    else{
+        int rec_id = 0;/*to be decided ;) */;
+        for ( int i = 0; i < strlen(index_key); i++ ) {
+            rec_id += index_key[i];
+        }
+        int block_index = 0;
+        for ( int i = 0; i < global_depth; i++ ) {
+            block_index += (rec_id % 2) * (int) pow(2, global_depth - i - 1);
+            rec_id /= 2;
+        }
+
+        int hashBlockIndex;
+        memcpy(&hashBlockIndex, firstBlockData + offset1 +
+                                (block_index / (BF_BLOCK_SIZE / sizeof(int))) * sizeof(int),
+               sizeof(int));
+        //we find the corresponding hashblock
+        BF_Block *hashBlock;
+        char *hashBlockData;
+        BF_Block_Init(&hashBlock);
+        CALL_BF(BF_GetBlock(fileDesc1, hashBlockIndex, hashBlock));
+        hashBlockData = BF_Block_GetData(hashBlock);
+
+        int destinationBlock;
+        char *blockToWritePointer;
+        memcpy(&destinationBlock, hashBlockData + (block_index % (BF_BLOCK_SIZE / sizeof(int))) * sizeof(int), sizeof(int));
+
+        BF_Block *blockToWrite;
+        BF_Block_Init(&blockToWrite);// it allocates the suitable space in memory
+        CALL_BF(BF_GetBlock(fileDesc1, destinationBlock, blockToWrite));
+        blockToWritePointer = BF_Block_GetData(blockToWrite);
+        int entries1;
+        memcpy(&entries1, blockToWritePointer + sizeof(int), sizeof(int));
+
+        for ( int j = 0; j < entries1; ++j ) {
+            SecondaryRecord recordFromBr;
+            memcpy(&recordFromBr, blockToWritePointer + 2 * sizeof(int) + j * sizeof(SecondaryRecord), sizeof(SecondaryRecord));
+            if(strcmp(index_key, recordFromBr.index_key)==0) {
+                for ( int k = 0; k < datablocksCounter2; ++k ) {
+                    BF_Block *bs;
+                    BF_Block_Init(&bs);
+                    CALL_BF(BF_GetBlock(fileDesc2, dataBlockArray2[k], bs));
+                    char *bsData = BF_Block_GetData(bs);
+                    int entries2;
+                    memcpy(&entries2, bsData + sizeof(int), sizeof(int));
+                    for ( int l = 0; l < entries2; ++l ) {
+                        SecondaryRecord recordFromBs;
+                        memcpy(&recordFromBs, bsData + 2 * sizeof(int) + l * sizeof(SecondaryRecord),
+                               sizeof(SecondaryRecord));
+                        if ( strcmp(recordFromBr.index_key, recordFromBs.index_key)) {
+                            printf("Index Key: %s    TupleID from file 1: %d    TupleID from file 2: %d \n",
+                                   recordFromBr.index_key, recordFromBr.tupleId, recordFromBs.tupleId);
+                        }
+                    }
+                    BF_UnpinBlock(bs);
+                    BF_Block_Destroy(&bs);
+                }
+            }
+        }
+        BF_UnpinBlock(blockToWrite);
+        BF_Block_Destroy(&blockToWrite);
+        BF_UnpinBlock(hashBlock);
+        BF_Block_Destroy(&hashBlock);
+    }
+
+    BF_UnpinBlock(firstBlock);
+    BF_Block_Destroy(&firstBlock);
+    BF_UnpinBlock(firstBlock2);
+    BF_Block_Destroy(&firstBlock2);
+
+
+
+
     return HT_OK;
 }
 
-HT_ErrorCode SHT_PRINTALL(int sindexDesc1){
+HT_ErrorCode SHT_PRINTALL(int sindexDesc1) {
     printf("SHT_PRINTALL");
     int fileDescSHT = OpenSHTFiles[sindexDesc1].BFid;
     int numOfBlocks;
-    BF_GetBlockCounter(fileDescSHT,&numOfBlocks);
+    BF_GetBlockCounter(fileDescSHT, &numOfBlocks);
 
     for ( int i = 2; i < numOfBlocks; ++i ) {
-        BF_Block * blockToPrint;
-        printf("BLOCK %d\n\n\n",i);
+        BF_Block *blockToPrint;
+        printf("BLOCK %d\n\n\n", i);
 
         BF_Block_Init(&blockToPrint);
-        BF_GetBlock(fileDescSHT,i,blockToPrint);
+        BF_GetBlock(fileDescSHT, i, blockToPrint);
         int entries;
-        char * blockData= BF_Block_GetData(blockToPrint);
-        memcpy(&entries,blockData+ sizeof(int),sizeof(int));
-        printf("entries %d\n\n\n",entries);
+        char *blockData = BF_Block_GetData(blockToPrint);
+        memcpy(&entries, blockData + sizeof(int), sizeof(int));
+        printf("entries %d\n\n\n", entries);
         for ( int j = 0; j < entries; ++j ) {
             SecondaryRecord sr;
-            memcpy(&sr,blockData+2* sizeof(int)+j*(sizeof(SecondaryRecord)), sizeof(SecondaryRecord));
-            printf("surname %s\n",sr.index_key);
-            printf("tupleid is %d | blockid is %d | place is %d\n",sr.tupleId,sr.tupleId/8-1,sr.tupleId%8);
+            memcpy(&sr, blockData + 2 * sizeof(int) + j * (sizeof(SecondaryRecord)), sizeof(SecondaryRecord));
+            printf("surname %s\n", sr.index_key);
+            printf("tupleid is %d | blockid is %d | place is %d\n", sr.tupleId, sr.tupleId / 8 - 1, sr.tupleId % 8);
         }
     }
     return HT_OK;

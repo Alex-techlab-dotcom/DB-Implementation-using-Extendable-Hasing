@@ -84,6 +84,7 @@ HT_ErrorCode HT_OpenIndex(const char *fileName, int *indexDesc) {
             strcpy(OpenHashFiles[i].FileName, fileName);
             CALL_BF(BF_OpenFile(fileName, &OpenHashFiles[i].BFid));
             *indexDesc = i;
+            printf("index %d\n",i);
             return HT_OK;
         }
     }
