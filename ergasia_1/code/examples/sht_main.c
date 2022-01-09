@@ -5,62 +5,12 @@
 #include "../include/sht_file.h"
 #include "../include/hash_file.h"
 #include "../include/bf.h"
-#define RECORDS_NUM 1000 // you can change it if you want
 #define GLOBAL_DEPT 2 // you can change it if you want
 #define FILE_NAME "data.db"
-
-const char* names[] = {
-        "Yannis",
-        "Christofos",
-        "Sofia",
-        "Marianna",
-        "Vagelis",
-        "Maria",
-        "Iosif",
-        "Dionisis",
-        "Konstantina",
-        "Theofilos",
-        "Giorgos",
-        "Dimitris"
-};
-
-const char* surnames[] = {
-        "Ioannidis",
-        "Svingos",
-        "Karvounari",
-        "Rezkalla",
-        "Nikolopoulos",
-        "Berreta",
-        "Koronis",
-        "Gaitanis",
-        "Oikonomou",
-        "Mailis",
-        "Michas",
-        "Halatsis",
-        "tsarli",
-        "tieto",
-        "Trlito",
-        "tSarto",
-        "tsArolito",
-        "tsaRlo",
-        "tsLio",
-        "ts",
-        "lito",
-        "rlito",
-};
-
-const char* cities[] = {
-        "Athens",
-        "San Francisco",
-        "Los Angeles",
-        "Amsterdam",
-        "London",
-        "New York",
-        "Tokyo",
-        "Hong Kong",
-        "Munich",
-        "Miami"
-};
+#define SHT_FILE_NAME "shtdata.db"
+#define FILE_NAME_2 "data2.db"
+#define SHT_FILE_NAME_2 "shtdata2.db"
+#define RECORD_FILE "examples/records.txt"
 
 #define CALL_OR_DIE(call)     \
   {                           \
@@ -75,41 +25,38 @@ const char* cities[] = {
 
     int main() {
 
-        //int array[]={26,14,16,12,10,21,17};
-
+      //create ht file and sht file
         CALL_OR_DIE(HT_Init());
         int indexDesc;
         int SHTindex;
-        CALL_OR_DIE(HT_CreateIndex(FILE_NAME, GLOBAL_DEPT));// creates a HashFile:"data.db" and gives GlobalDept=2 for the hashmap
-        CALL_OR_DIE(SHT_CreateSecondaryIndex("shtdata.db","surname",20,GLOBAL_DEPT,FILE_NAME));
-        CALL_OR_DIE(HT_OpenIndex(FILE_NAME, &indexDesc)); //it opens "data.db" and it returns its index( lets say it is index 10 ) to the HashFiles Array[20]
-        CALL_OR_DIE(SHT_OpenSecondaryIndex("shtdata.db",&SHTindex));
+        CALL_OR_DIE(HT_CreateIndex(FILE_NAME, GLOBAL_DEPT));
+        CALL_OR_DIE(SHT_CreateSecondaryIndex(SHT_FILE_NAME,"surname",20,GLOBAL_DEPT,FILE_NAME));
+        CALL_OR_DIE(HT_OpenIndex(FILE_NAME, &indexDesc));
+        CALL_OR_DIE(SHT_OpenSecondaryIndex(SHT_FILE_NAME,&SHTindex));
+        
         Record record;
-        // printf("indexDesc %d\n",indexDesc);
-
-       // srand(12569874);
-        srand(time(NULL));
-        int r;
-        printf("Insert Entries\n");
-        // Insertion of 1000 entries!
-        int n=100;
+        int id;
+	      char * name;
+	      char * surname;
+	      char * city;
+        FILE *file;
+        file = fopen(RECORD_FILE, "r");
+        char* buffer = malloc(1024);
+        int counter=0;
         UpdateRecordArray array;
         int tupleId=0;
-        for (int id = 0; id < n; ++id) {
-            // create a record
-            record.id = id;
-            // printf("record.id=%d\n",record.id);
-            r = rand() % 12;
-            memcpy(record.name, names[r], strlen(names[r]) + 1);
-            r = rand() % 21;
-            memcpy(record.surname, surnames[r], strlen(surnames[r]) + 1);
-            r = rand() % 10;
-            memcpy(record.city, cities[r], strlen(cities[r]) + 1);
+        while(fgets(buffer, 1024, file)!=NULL && ++counter<100){
+          id = atoi(strtok(buffer,"\t"));
+          name = strtok(NULL,"\t");
+          surname = strtok(NULL,"\t");
+          city = strtok(NULL,"\t");
+          record.id=id;
+          memcpy(record.name, name, strlen(name) + 1);
+          memcpy(record.surname, surname, strlen(surname) + 1);
+          memcpy(record.city, city, strlen(city) + 1);
 
-            CALL_OR_DIE(HT_InsertEntry(indexDesc, record,&tupleId,&array));// Array[indexDesc=10].inserts(record)
-           // printf("NAME : %s has tupleid %d\n",record.surname,tupleId);
+          CALL_OR_DIE(HT_InsertEntry(indexDesc, record,&tupleId,&array));
             if(array.hasResults){
-                printf("we have split\n");
                 CALL_OR_DIE(SHT_SecondaryUpdateEntry(SHTindex,&array));
             }
             SecondaryRecord  sr;
@@ -117,20 +64,90 @@ const char* cities[] = {
             strcpy(sr.index_key,record.surname);
             CALL_OR_DIE(SHT_SecondaryInsertEntry(SHTindex,sr));
         }
-        HT_PrintAllEntries(indexDesc,NULL);
-        SHT_PRINTALL(SHTindex);
-       // SHT_PrintAllEntries(SHTindex,"Michas");
-        SHT_HashStatistics("shtdata.db");
+
+        id=50;
+        printf("The entry with id 50 is:\n");
+        HT_PrintAllEntries(indexDesc, &id); //print the entry with id = 50 (for the whole table to be printed call HT_PrintAllEntries(indexDesc, NULL))
+
+        printf("\nThe entries with surname MILLER are:\n");
+        SHT_PrintAllEntries(SHTindex, "MILLER"); //print all entries with surname = SMITH
+
+        //insert a new record to primary and secondary hash table
+        if(fgets(buffer, 1024, file)!=NULL){
+          id = atoi(strtok(buffer,"\t"));
+          name = strtok(NULL,"\t");
+          surname = strtok(NULL,"\t");
+          city = strtok(NULL,"\t");
+          record.id=id;
+          memcpy(record.name, name, strlen(name) + 1);
+          memcpy(record.surname, surname, strlen(surname) + 1);
+          memcpy(record.city, city, strlen(city) + 1);
+
+          CALL_OR_DIE(HT_InsertEntry(indexDesc, record,&tupleId,&array));
+            if(array.hasResults){
+                CALL_OR_DIE(SHT_SecondaryUpdateEntry(SHTindex,&array));
+            }
+            SecondaryRecord  sr;
+            sr.tupleId=tupleId;
+            strcpy(sr.index_key,record.surname);
+            CALL_OR_DIE(SHT_SecondaryInsertEntry(SHTindex,sr));
+        }
+
+        printf("\nThe last inserted entry is:\n");
+        HT_PrintAllEntries(indexDesc, &id); //print the new entry inserted
+
+        printf("\nThe entries with the same surname is the last inserted are:\n");
+        SHT_PrintAllEntries(SHTindex, surname); //print all entries with surname = new surname inserted
+
+        CALL_OR_DIE(HashStatistics(FILE_NAME));
+        printf("\n\n");
+        CALL_OR_DIE(SHT_HashStatistics(SHT_FILE_NAME));
+
+
+        //create 2nd set of hash tables to demonstrate inner join function
+        int indexDesc2;
+        int SHTindex2;
+        CALL_OR_DIE(HT_CreateIndex(FILE_NAME_2, GLOBAL_DEPT));
+        CALL_OR_DIE(SHT_CreateSecondaryIndex(SHT_FILE_NAME_2,"surname",20,GLOBAL_DEPT,FILE_NAME_2));
+        CALL_OR_DIE(HT_OpenIndex(FILE_NAME_2, &indexDesc2));
+        CALL_OR_DIE(SHT_OpenSecondaryIndex(SHT_FILE_NAME_2,&SHTindex2));
+
+        //insert records to new hash tables
+        tupleId=0;
+        counter=0;
+        while(fgets(buffer, 1024, file)!=NULL && ++counter<200){
+          id = atoi(strtok(buffer,"\t"));
+          name = strtok(NULL,"\t");
+          surname = strtok(NULL,"\t");
+          city = strtok(NULL,"\t");
+          record.id=id;
+          memcpy(record.name, name, strlen(name) + 1);
+          memcpy(record.surname, surname, strlen(surname) + 1);
+          memcpy(record.city, city, strlen(city) + 1);
+
+          CALL_OR_DIE(HT_InsertEntry(indexDesc2, record,&tupleId,&array));
+            if(array.hasResults){
+                CALL_OR_DIE(SHT_SecondaryUpdateEntry(SHTindex2,&array));
+            }
+            SecondaryRecord  sr;
+            sr.tupleId=tupleId;
+            strcpy(sr.index_key,record.surname);
+            CALL_OR_DIE(SHT_SecondaryInsertEntry(SHTindex2,sr));
+        }
+
+        SHT_PRINTALL(SHTindex2);
+
+        //join the 2 hash tables on surname=HALL (call the function like SHT_InnerJoin(SHTindex, SHTindex2, NULL) for all joins to be displayed)
+        printf("\nINNER JOIN SHT1, SHT2 WHERE Index_key = MILLER :\n");
+        CALL_OR_DIE(SHT_InnerJoin(SHTindex, SHTindex2, "MILLER" ));
 
         CALL_OR_DIE(SHT_CloseSecondaryIndex(SHTindex));
-
         CALL_OR_DIE(HT_CloseFile(indexDesc));
 
+        CALL_OR_DIE(SHT_CloseSecondaryIndex(SHTindex2));
+        CALL_OR_DIE(HT_CloseFile(indexDesc2));
 
-        CALL_OR_DIE(HT_OpenIndex(FILE_NAME, &indexDesc)); //it opens "data.db" and it returns its index( lets say it is index 10 ) to the HashFiles Array[20]
-        CALL_OR_DIE(HashStatistics(FILE_NAME));
-        CALL_OR_DIE(HT_CloseFile(indexDesc));
+        free(buffer);
 
         BF_Close();
-        printf("%lu\n", sizeof(SecondaryRecord));
     }
